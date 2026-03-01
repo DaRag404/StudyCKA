@@ -1,0 +1,33 @@
+id: "43"
+title: "Fix Node Affinity"
+difficulty: "hard"
+category: "Scheduling"
+order: 43
+description: |
+  Pod is Pending due to bad affinity.
+
+  Fix it.
+
+validation:
+  - args: ["get","pod","aff-pod","-o","jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod scheduled"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: aff-pod
+      spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: disktype
+                  operator: In
+                  values: ["nonexistent"]
+        containers:
+        - name: nginx
+          image: nginx:1.25

@@ -1,0 +1,69 @@
+id: "36"
+title: "Multi-step App Stack (Deployment + Service + ConfigMap)"
+difficulty: "hard"
+category: "Workloads"
+order: 36
+description: |
+  A Deployment `app` should read configuration from a ConfigMap and be exposed via a Service.
+
+  Issues:
+  - ConfigMap key is wrong
+  - Deployment does not reference it correctly
+  - Service selector is incorrect
+
+  Fix all resources so:
+  - Pods are Running
+  - Env var APP_ENV=production is set
+  - Service routes traffic to Pods
+
+hints:
+  - "Check envFrom / configMapKeyRef"
+  - "Verify labels and selectors"
+validation:
+  - args: ["get","svc","app-svc","-o","jsonpath={.spec.selector.app}"]
+    expect: "app"
+    description: "Service selector fixed"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: app-config
+      data:
+        ENV: production
+      ---
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: app
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: wrong
+        template:
+          metadata:
+            labels:
+              app: wrong
+          spec:
+            containers:
+            - name: app
+              image: nginx:1.25
+              env:
+              - name: APP_ENV
+                valueFrom:
+                  configMapKeyRef:
+                    name: app-config
+                    key: WRONG
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: app-svc
+      spec:
+        selector:
+          app: wrong
+        ports:
+        - port: 80
+          targetPort: 80

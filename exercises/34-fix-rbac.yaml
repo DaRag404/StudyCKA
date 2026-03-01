@@ -1,0 +1,32 @@
+id: "34"
+title: "Fix RBAC Permissions"
+difficulty: "hard"
+category: "Security"
+order: 34
+description: |
+  The ServiceAccount `dev-sa` cannot list Pods.
+
+  Fix RBAC.
+
+hints:
+  - "Check Role verbs"
+validation:
+  - args: ["get","role","pod-reader","-o","jsonpath={.rules[0].verbs[0]}"]
+    expect: "get"
+    description: "Role has correct verb"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: dev-sa
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: pod-reader
+      rules:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["watch"]

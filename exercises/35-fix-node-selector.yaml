@@ -1,0 +1,29 @@
+id: "35"
+title: "Fix Node Selector"
+difficulty: "hard"
+category: "Scheduling"
+order: 35
+description: |
+  The Pod `node-pod` is Pending.
+
+  Fix scheduling.
+
+hints:
+  - "Check node labels"
+validation:
+  - args: ["get","pod","node-pod","-o","jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod is running"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: node-pod
+      spec:
+        nodeSelector:
+          disktype: hdd
+        containers:
+        - name: nginx
+          image: nginx:1.25

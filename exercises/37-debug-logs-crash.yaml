@@ -1,0 +1,26 @@
+id: "37"
+title: "Debug Crash via Logs"
+difficulty: "medium"
+category: "Troubleshooting"
+order: 37
+description: |
+  Pod `logger-pod` is crashing. Use logs to determine the issue and fix it.
+
+hints:
+  - "kubectl logs logger-pod"
+validation:
+  - args: ["get","pod","logger-pod","-o","jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod runs"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: logger-pod
+      spec:
+        containers:
+        - name: app
+          image: busybox
+          command: ["sh","-c","exit 1"]

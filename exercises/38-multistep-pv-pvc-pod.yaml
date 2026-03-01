@@ -1,0 +1,59 @@
+id: "38"
+title: "PV + PVC + Pod Binding Chain"
+difficulty: "hard"
+category: "Storage"
+order: 38
+description: |
+  Storage chain is broken:
+  - PV and PVC do not bind
+  - Pod cannot mount volume
+
+  Fix everything so Pod is Running with mounted storage.
+
+hints:
+  - "Match accessModes and storage"
+validation:
+  - args: ["get","pvc","claim","-o","jsonpath={.status.phase}"]
+    expect: "Bound"
+    description: "PVC bound"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: PersistentVolume
+      metadata:
+        name: pv
+      spec:
+        capacity:
+          storage: 1Gi
+        accessModes:
+        - ReadWriteOnce
+        hostPath:
+          path: /data
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: claim
+      spec:
+        accessModes:
+        - ReadOnlyMany
+        resources:
+          requests:
+            storage: 1Gi
+      ---
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: pvc-pod
+      spec:
+        containers:
+        - name: app
+          image: nginx:1.25
+          volumeMounts:
+          - mountPath: "/data"
+            name: vol
+        volumes:
+        - name: vol
+          persistentVolumeClaim:
+            claimName: claim

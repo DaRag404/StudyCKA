@@ -1,0 +1,25 @@
+id: "41"
+title: "Fix ImagePullBackOff"
+difficulty: "easy"
+category: "Troubleshooting"
+order: 41
+description: |
+  Pod cannot pull image.
+
+  Fix image.
+
+validation:
+  - args: ["get","pod","pull-pod","-o","jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod running"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: pull-pod
+      spec:
+        containers:
+        - name: app
+          image: nginx:badtag

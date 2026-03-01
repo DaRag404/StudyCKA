@@ -1,0 +1,27 @@
+id: "42"
+title: "NetworkPolicy Allow Specific Traffic"
+difficulty: "hard"
+category: "Networking"
+order: 42
+description: |
+  Traffic between Pods is blocked.
+
+  Fix NetworkPolicy so:
+  - Only Pods with label access=true can reach app=secure
+
+validation:
+  - args: ["get","networkpolicy","np","-o","jsonpath={.spec.ingress[0].from[0].podSelector.matchLabels.access}"]
+    expect: "true"
+    description: "Policy allows correct pods"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: np
+      spec:
+        podSelector:
+          matchLabels:
+            app: secure
+        ingress: []

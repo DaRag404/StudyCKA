@@ -1,0 +1,46 @@
+id: "40"
+title: "Multi-step RBAC Fix"
+difficulty: "hard"
+category: "Security"
+order: 40
+description: |
+  A ServiceAccount cannot access Pods.
+
+  Fix:
+  - Role verbs
+  - RoleBinding reference
+
+hints:
+  - "Check subjects"
+validation:
+  - args: ["get","rolebinding","rb","-o","jsonpath={.subjects[0].name}"]
+    expect: "dev"
+    description: "Correct SA bound"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: dev
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: role
+      rules:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["watch"]
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: rb
+      subjects:
+      - kind: ServiceAccount
+        name: wrong
+      roleRef:
+        kind: Role
+        name: role
+        apiGroup: rbac.authorization.k8s.io

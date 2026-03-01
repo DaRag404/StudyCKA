@@ -1,0 +1,31 @@
+id: "39"
+title: "Debug Readiness Probe"
+difficulty: "medium"
+category: "Workloads"
+order: 39
+description: |
+  Pod is running but never becomes Ready.
+
+  Fix readiness probe.
+
+hints:
+  - "Check probe path"
+validation:
+  - args: ["get","pod","ready-pod","-o","jsonpath={.status.containerStatuses[0].ready}"]
+    expect: "true"
+    description: "Pod is ready"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: ready-pod
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.25
+          readinessProbe:
+            httpGet:
+              path: /wrong
+              port: 80

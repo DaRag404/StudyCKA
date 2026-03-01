@@ -1,0 +1,41 @@
+id: "33"
+title: "Fix PVC AccessMode"
+difficulty: "hard"
+category: "Storage"
+order: 33
+description: |
+  The PVC is not binding.
+
+  Fix the access mode.
+
+hints:
+  - "Compare PV and PVC"
+validation:
+  - args: ["get","pvc","data-claim","-o","jsonpath={.status.phase}"]
+    expect: "Bound"
+    description: "PVC is bound"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: PersistentVolume
+      metadata:
+        name: pv-data
+      spec:
+        capacity:
+          storage: 1Gi
+        accessModes:
+        - ReadWriteOnce
+        hostPath:
+          path: /mnt/data
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data-claim
+      spec:
+        accessModes:
+        - ReadOnlyMany
+        resources:
+          requests:
+            storage: 1Gi

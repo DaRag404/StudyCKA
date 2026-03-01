@@ -1,0 +1,38 @@
+id: "44"
+title: "Init Container Data Flow"
+difficulty: "hard"
+category: "Workloads"
+order: 44
+description: |
+  Init container should create a file used by main container.
+
+  Fix volume sharing so nginx serves the file.
+
+validation:
+  - args: ["get","pod","init-pod","-o","jsonpath={.spec.volumes[0].name}"]
+    expect: "data"
+    description: "Volume configured"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: init-pod
+      spec:
+        initContainers:
+        - name: init
+          image: busybox
+          command: ["sh","-c","echo hello > /data/index.html"]
+          volumeMounts:
+          - name: wrong
+            mountPath: /data
+        containers:
+        - name: nginx
+          image: nginx:1.25
+          volumeMounts:
+          - name: data
+            mountPath: /usr/share/nginx/html
+        volumes:
+        - name: data
+          emptyDir: {}

@@ -1,0 +1,29 @@
+id: "26"
+title: "Fix CrashLoopBackOff (Bad Command)"
+difficulty: "hard"
+category: "Troubleshooting"
+order: 26
+description: |
+  The Pod `broken-pod` is in CrashLoopBackOff.
+
+  Identify and fix the issue so the Pod runs successfully.
+
+hints:
+  - "Check logs: kubectl logs broken-pod"
+  - "Inspect command/args"
+validation:
+  - args: ["get","pod","broken-pod","-o","jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod is running"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: broken-pod
+      spec:
+        containers:
+        - name: app
+          image: busybox
+          command: ["false"]

@@ -1,0 +1,40 @@
+id: "30"
+title: "Fix ConfigMap Key Reference"
+difficulty: "hard"
+category: "Configuration"
+order: 30
+description: |
+  The Pod `cm-pod` fails due to a wrong ConfigMap key.
+
+  Fix the reference.
+
+hints:
+  - "Check ConfigMap data keys"
+validation:
+  - args: ["get","pod","cm-pod","-o","jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod is running"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: app-config
+      data:
+        ENV: production
+      ---
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: cm-pod
+      spec:
+        containers:
+        - name: app
+          image: nginx:1.25
+          env:
+          - name: ENV
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: WRONG

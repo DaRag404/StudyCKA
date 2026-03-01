@@ -1,0 +1,29 @@
+id: "29"
+title: "Fix DNS Policy"
+difficulty: "hard"
+category: "Networking"
+order: 29
+description: |
+  The Pod `dns-pod` cannot resolve DNS.
+
+  Fix the configuration.
+
+hints:
+  - "Check dnsPolicy"
+validation:
+  - args: ["get","pod","dns-pod","-o","jsonpath={.spec.dnsPolicy}"]
+    expect: "ClusterFirst"
+    description: "Correct DNS policy"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: dns-pod
+      spec:
+        dnsPolicy: Default
+        containers:
+        - name: app
+          image: busybox
+          command: ["sleep","3600"]
