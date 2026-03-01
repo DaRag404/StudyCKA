@@ -6,7 +6,7 @@ EXIT_CODE=0
 for dir in backend frontend; do
   echo "→ ESLint --fix $dir"
   cd "$REPO_ROOT/$dir"
-  npx eslint --fix src 2>/dev/null || true
+  npm run lint -- --fix 2>/dev/null || true
 done
 
 # If auto-fix modified source files, stop and ask user to commit the fixes
@@ -25,7 +25,7 @@ fi
 for dir in backend frontend; do
   echo "→ ESLint $dir"
   cd "$REPO_ROOT/$dir"
-  if ! npx eslint src; then
+  if ! npm run lint; then
     EXIT_CODE=1
   fi
 done
