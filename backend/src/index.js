@@ -21,6 +21,7 @@ app.use((req, _res, next) => {
 // ── REST Routes ───────────────────────────────────────────────────────────────
 app.use('/api/exercises', require('./routes/exercises'));
 app.use('/api/session',   require('./routes/session'));
+app.use('/api/setup',     require('./routes/setup'));
 app.use('/api/reset',     require('./routes/reset'));
 app.use('/api/check',     require('./routes/check'));
 
