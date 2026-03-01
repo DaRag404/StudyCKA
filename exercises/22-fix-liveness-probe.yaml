@@ -1,0 +1,61 @@
+id: "22"
+title: "Fix: Pod Restarting Due to Bad Liveness Probe"
+difficulty: "medium"
+category: "Troubleshooting"
+order: 22
+description: |
+  A Pod named `probe-pod` keeps **restarting**. The restart count keeps climbing.
+
+  **Investigate:**
+  ```
+  kubectl get pod probe-pod
+  kubectl describe pod probe-pod
+  # Look at: Liveness probe, Last State, Events
+  ```
+
+  The liveness probe is checking the wrong port. nginx listens on port **80**,
+  but the probe is hitting port **9090** which nothing is listening on.
+
+  **Fix:** Update the liveness probe to check port `80`.
+
+  Export, edit, delete, and re-apply:
+  ```
+  kubectl get pod probe-pod -o yaml > probe-pod.yaml
+  # Edit livenessProbe.httpGet.port: 80
+  kubectl delete pod probe-pod
+  kubectl apply -f probe-pod.yaml
+  ```
+
+  **Verify:**
+  ```
+  kubectl get pod probe-pod
+  # RESTARTS should stop increasing
+  kubectl describe pod probe-pod | grep -A8 "Liveness"
+  ```
+hints:
+  - "`kubectl describe pod probe-pod` — check the Liveness line and the Events for probe failure details"
+  - "The fix is to change `livenessProbe.httpGet.port` from `9090` to `80`"
+  - "After fixing, watch `kubectl get pod probe-pod` — restarts should stabilise"
+validation:
+  - args: ["get", "pod", "probe-pod", "-o", "jsonpath={.spec.containers[0].livenessProbe.httpGet.port}"]
+    expect: "80"
+    description: "Liveness probe now targets port 80"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: probe-pod
+        namespace: default
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.25
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9090
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 2

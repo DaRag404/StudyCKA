@@ -1,0 +1,103 @@
+id: "25"
+title: "Fix: NetworkPolicy Blocking Traffic"
+difficulty: "hard"
+category: "Troubleshooting"
+order: 25
+description: |
+  A NetworkPolicy named `deny-all` is blocking all ingress traffic to pods in the `default` namespace.
+  A Service `web-svc` and Pod `web-pod` exist but cannot be reached from other pods.
+
+  **Investigate:**
+  ```
+  kubectl get networkpolicy
+  kubectl describe networkpolicy deny-all
+  # Notice: no Ingress rules → denies all ingress
+  ```
+
+  **Fix:** Create a new NetworkPolicy that allows ingress on port **80** to pods
+  labelled `app: web`:
+
+  ```yaml
+  apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: allow-web-ingress
+    namespace: default
+  spec:
+    podSelector:
+      matchLabels:
+        app: web
+    policyTypes:
+    - Ingress
+    ingress:
+    - ports:
+      - port: 80
+  ```
+
+  Apply it:
+  ```
+  kubectl apply -f allow-web-ingress.yaml
+  ```
+
+  **Verify:**
+  ```
+  kubectl get networkpolicy
+  # Two policies listed: deny-all and allow-web-ingress
+  kubectl describe networkpolicy allow-web-ingress
+  ```
+hints:
+  - "A NetworkPolicy with an empty `ingress: []` array denies ALL ingress to matched pods"
+  - "Multiple NetworkPolicies are additive — adding an allow policy does not remove the deny"
+  - "The `podSelector: {}` in `deny-all` matches ALL pods in the namespace"
+validation:
+  - args: ["get", "networkpolicy", "allow-web-ingress", "-o", "jsonpath={.spec.ingress[0].ports[0].port}"]
+    expect: "80"
+    description: "allow-web-ingress policy permits port 80"
+  - args: ["get", "networkpolicy", "allow-web-ingress", "-o", "jsonpath={.spec.podSelector.matchLabels.app}"]
+    expect: "web"
+    description: "Policy targets pods labelled app=web"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web-deploy
+        namespace: default
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25
+              ports:
+              - containerPort: 80
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: web-svc
+        namespace: default
+      spec:
+        selector:
+          app: web
+        ports:
+        - port: 80
+          targetPort: 80
+      ---
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: deny-all
+        namespace: default
+      spec:
+        podSelector: {}
+        policyTypes:
+        - Ingress

@@ -1,0 +1,62 @@
+id: "16"
+title: "Fix: CrashLoopBackOff"
+difficulty: "medium"
+category: "Troubleshooting"
+order: 16
+description: |
+  A Pod named `broken-pod` is stuck in **CrashLoopBackOff**. Find out why it keeps crashing and fix it.
+
+  **Investigate:**
+  ```
+  kubectl get pod broken-pod
+  kubectl describe pod broken-pod
+  kubectl logs broken-pod
+  ```
+
+  The logs will tell you what is going wrong. The pod should run `nginx` and stay alive.
+  The current command is incorrect — remove it so the container uses the default nginx entrypoint.
+
+  **Fix options:**
+
+  Edit the pod (delete and recreate, since command is immutable on a running pod):
+  ```
+  kubectl get pod broken-pod -o yaml > broken-pod.yaml
+  # Edit: remove the 'command' field entirely
+  kubectl delete pod broken-pod
+  kubectl apply -f broken-pod.yaml
+  ```
+
+  Or use a one-liner patch on the deployment if it is managed by one:
+  ```
+  kubectl patch pod broken-pod ...
+  ```
+
+  **Verify:**
+  ```
+  kubectl get pod broken-pod
+  # STATUS should be Running
+  ```
+hints:
+  - "Run `kubectl logs broken-pod` — what is the exit code and message?"
+  - "The `command` field in the pod spec overrides the container image's default entrypoint"
+  - "You cannot edit `command` in-place — export the YAML, fix it, delete and re-apply"
+validation:
+  - args: ["get", "pod", "broken-pod", "-o", "jsonpath={.spec.containers[0].image}"]
+    expect: "nginx:1.25"
+    description: "Pod still uses nginx:1.25"
+  - args: ["get", "pod", "broken-pod", "-o", "jsonpath={.spec.containers[0].command}"]
+    expect: ""
+    description: "Broken command has been removed from the pod spec"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: broken-pod
+        namespace: default
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.25
+          command: ["sh", "-c", "echo 'Starting...'; exit 1"]

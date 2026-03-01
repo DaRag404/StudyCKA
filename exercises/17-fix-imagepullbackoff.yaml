@@ -1,0 +1,62 @@
+id: "17"
+title: "Fix: ImagePullBackOff"
+difficulty: "easy"
+category: "Troubleshooting"
+order: 17
+description: |
+  A Deployment named `web` is failing because the container image cannot be pulled.
+
+  **Investigate:**
+  ```
+  kubectl get pods -l app=web
+  kubectl describe pod <pod-name>
+  ```
+
+  Look at the **Events** section — you will see an image pull error.
+  The correct image should be `nginx:1.25`. Update the deployment to use the right tag.
+
+  **Fix:**
+  ```
+  kubectl set image deployment/web nginx=nginx:1.25
+  ```
+
+  Or edit directly:
+  ```
+  kubectl edit deployment web
+  # Change the image tag to 1.25
+  ```
+
+  **Verify:**
+  ```
+  kubectl rollout status deployment/web
+  kubectl get pods -l app=web
+  ```
+hints:
+  - "`kubectl describe pod <name>` — look at the Events section for the exact error"
+  - "The image tag `ngnix:1.25` contains a typo — `ngnix` instead of `nginx`"
+  - "`kubectl set image deployment/web <container-name>=nginx:1.25` is the fastest fix"
+validation:
+  - args: ["get", "deployment", "web", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
+    expect: "nginx:1.25"
+    description: "Deployment uses the correct image nginx:1.25"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+        namespace: default
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: ngnix:1.25

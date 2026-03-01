@@ -1,0 +1,63 @@
+id: "23"
+title: "Fix: OOMKilled — Memory Limit Too Low"
+difficulty: "medium"
+category: "Troubleshooting"
+order: 23
+description: |
+  A Pod named `memory-pod` keeps crashing with status **OOMKilled** (Out Of Memory Killed).
+  The container is being terminated by the kernel because it exceeds its memory limit.
+
+  **Investigate:**
+  ```
+  kubectl get pod memory-pod
+  kubectl describe pod memory-pod
+  # Look at: Last State → Reason: OOMKilled
+  # Look at: Limits → memory
+  ```
+
+  The memory limit is set too low for the application to run.
+  Increase the memory limit to `64Mi` and the request to `32Mi`.
+
+  **Fix:**
+  ```
+  kubectl get pod memory-pod -o yaml > memory-pod.yaml
+  # Edit:
+  #   resources.requests.memory: 32Mi
+  #   resources.limits.memory: 64Mi
+  kubectl delete pod memory-pod
+  kubectl apply -f memory-pod.yaml
+  ```
+
+  **Verify:**
+  ```
+  kubectl get pod memory-pod
+  # Should be Running without restarts
+  ```
+hints:
+  - "`kubectl describe pod memory-pod` — look for `Last State: Terminated  Reason: OOMKilled`"
+  - "The OOM killer triggers when a container exceeds its `resources.limits.memory`"
+  - "Set a limit that is realistic: nginx typically needs 20–50 MB at idle"
+validation:
+  - args: ["get", "pod", "memory-pod", "-o", "jsonpath={.spec.containers[0].resources.limits.memory}"]
+    expect: "64Mi"
+    description: "Memory limit increased to 64Mi"
+  - args: ["get", "pod", "memory-pod", "-o", "jsonpath={.spec.containers[0].resources.requests.memory}"]
+    expect: "32Mi"
+    description: "Memory request set to 32Mi"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: memory-pod
+        namespace: default
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.25
+          resources:
+            requests:
+              memory: "2Mi"
+            limits:
+              memory: "4Mi"
