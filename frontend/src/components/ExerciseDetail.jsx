@@ -50,6 +50,7 @@ export default function ExerciseDetail() {
   const [exercise, setExercise]   = useState(null);
   const [checking, setChecking]   = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [settingUp, setSettingUp] = useState(false);
   const [showHints, setShowHints] = useState(false);
 
   // Load exercise detail when selection changes
@@ -63,7 +64,16 @@ export default function ExerciseDetail() {
       .catch(console.error);
   }, [selectedId]);
 
-  const isReady = sessionStatus === 'ready';
+  // Auto-apply preconditions when exercise is selected and session is ready
+  useEffect(() => {
+    if (!selectedId || sessionStatus !== 'ready') return;
+    setSettingUp(true);
+    fetch(`/api/setup/${selectedId}?userId=${userId}`, { method: 'POST' })
+      .catch(console.error)
+      .finally(() => setSettingUp(false));
+  }, [selectedId, sessionStatus]);
+
+  const isReady = sessionStatus === 'ready' && !settingUp;
 
   async function handleCheck() {
     if (!isReady || !selectedId) return;
@@ -213,15 +223,15 @@ export default function ExerciseDetail() {
         </button>
         <button
           onClick={handleReset}
-          disabled={resetting || sessionStatus === 'starting' || sessionStatus === 'waiting'}
+          disabled={resetting || settingUp || sessionStatus === 'starting' || sessionStatus === 'waiting'}
           className={[
             'flex-1 py-2 px-3 rounded text-sm font-medium transition-colors',
-            !resetting
+            !resetting && !settingUp
               ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
               : 'bg-gray-700 text-gray-500 cursor-not-allowed',
           ].join(' ')}
         >
-          {resetting ? 'Resetting…' : '↺ Reset Environment'}
+          {resetting ? 'Resetting…' : settingUp ? 'Setting up…' : '↺ Reset Environment'}
         </button>
       </div>
     </div>
