@@ -2,6 +2,8 @@
 
 A self-contained CKA exam training platform. Work through hands-on Kubernetes exercises in a live terminal connected to a real, isolated k3s cluster — all running locally in Docker.
 
+<img width="1473" height="872" alt="image" src="https://github.com/user-attachments/assets/3aae4602-1c72-4f81-aa0a-0222fc63949b" />
+
 ---
 
 ## Requirements
