@@ -2,6 +2,7 @@
 
 const http     = require('http');
 const express  = require('express');
+const pty      = require('node-pty');
 const { WebSocketServer } = require('ws');
 const { URL }  = require('url');
 const sandbox  = require('./sandbox/docker');
@@ -34,7 +35,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
 server.on('upgrade', (req, socket, head) => {
-  const { pathname } = new URL(req.url, `http://localhost`);
+  const { pathname } = new URL(req.url, 'http://localhost');
   if (pathname === '/terminal') {
     wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
   } else {
@@ -42,11 +43,11 @@ server.on('upgrade', (req, socket, head) => {
   }
 });
 
-wss.on('connection', async (ws, req) => {
-  const { searchParams } = new URL(req.url, `http://localhost`);
+wss.on('connection', (ws, req) => {
+  const { searchParams } = new URL(req.url, 'http://localhost');
   const userId = searchParams.get('userId');
-  const cols   = Math.max(40, parseInt(searchParams.get('cols') ?? '220', 10) || 220);
-  const rows   = Math.max(10, parseInt(searchParams.get('rows') ?? '50',  10) || 50);
+  const cols   = Math.max(40,  parseInt(searchParams.get('cols') ?? '220', 10) || 220);
+  const rows   = Math.max(10,  parseInt(searchParams.get('rows') ?? '50',  10) || 50);
 
   if (!userId) {
     ws.close(1008, 'userId required');
@@ -61,49 +62,67 @@ wss.on('connection', async (ws, req) => {
 
   sessions.touch(userId);
 
-  let exec, stream;
-
+  // ── Spawn bash via node-pty ───────────────────────────────────────────────
+  // node-pty creates a real POSIX PTY pair on the host. docker exec -it sees
+  // a proper TTY on its stdin, allocates a PTY inside the container, and bash
+  // runs with full terminal support (arrow keys, vim, resize, etc.).
+  let proc;
   try {
-    ({ exec, stream } = await sandbox.openTerminal(session.containerId, cols, rows));
+    proc = pty.spawn('docker', [
+      'exec', '-it',
+      '-e', 'TERM=xterm-256color',
+      '-e', 'KUBECONFIG=/etc/rancher/k3s/k3s.yaml',
+      '-e', 'HOME=/root',
+      '-e', `COLUMNS=${cols}`,
+      '-e', `LINES=${rows}`,
+      '-w', '/root',
+      `studycka-${userId}`,
+      '/bin/bash', '--login',
+    ], {
+      name: 'xterm-256color',
+      cols,
+      rows,
+      env: { TERM: 'xterm-256color', HOME: '/root' },
+    });
   } catch (err) {
-    console.error('[terminal] openTerminal failed:', err.message);
+    console.error('[terminal] pty.spawn failed:', err.message);
     ws.close(1011, 'Failed to open terminal');
     return;
   }
 
-  // Docker TTY stream → browser (binary frames)
-  stream.on('data', (chunk) => {
-    if (ws.readyState === ws.OPEN) ws.send(chunk);
+  // ── PTY output → WebSocket (binary frames) ───────────────────────────────
+  // node-pty gives a string; encode as binary Buffer to preserve every byte
+  // value including sub-0x20 bytes inside escape sequences.
+  proc.onData((data) => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(Buffer.from(data, 'binary'), { binary: true });
+    }
   });
 
-  stream.on('end', () => {
+  proc.onExit(({ exitCode }) => {
+    console.log('[terminal] pty exited, code:', exitCode);
     if (ws.readyState === ws.OPEN) ws.close(1000, 'Terminal closed');
   });
 
-  stream.on('error', (err) => {
-    console.error('[terminal] stream error:', err.message);
-    ws.close(1011, 'Stream error');
-  });
-
-  // Browser → Docker PTY
-  ws.on('message', (data) => {
+  // ── WebSocket → PTY ──────────────────────────────────────────────────────
+  ws.on('message', (raw) => {
     try {
-      const msg = JSON.parse(data.toString());
-      if (msg.type === 'input' && stream.writable) {
-        stream.write(msg.data);
-      } else if (msg.type === 'resize' && exec) {
-        exec.resize({ h: msg.data.rows, w: msg.data.cols }).catch(() => {});
+      const msg = JSON.parse(raw.toString());
+      if (msg.type === 'input') {
+        proc.write(msg.data);
+      } else if (msg.type === 'resize') {
+        proc.resize(Math.max(1, msg.data.cols), Math.max(1, msg.data.rows));
       }
     } catch (_) { /* ignore malformed messages */ }
   });
 
   ws.on('close', () => {
-    try { stream.destroy(); } catch (_) {}
+    try { proc.kill(); } catch (_) {}
   });
 
   ws.on('error', (err) => {
     console.error('[ws] error:', err.message);
-    try { stream.destroy(); } catch (_) {}
+    try { proc.kill(); } catch (_) {}
   });
 });
 
@@ -119,7 +138,7 @@ setInterval(async () => {
         console.error(`[cleanup] remove failed for ${userId}:`, e.message));
     }
   }
-}, 5 * 60 * 1000); // check every 5 minutes
+}, 5 * 60 * 1000);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 server.listen(PORT, () => {
