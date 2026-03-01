@@ -9,12 +9,13 @@ for dir in backend frontend; do
   npx eslint --fix src 2>/dev/null || true
 done
 
-# If auto-fix modified files, stop and ask user to commit the fixes
+# If auto-fix modified source files, stop and ask user to commit the fixes
 cd "$REPO_ROOT"
-if ! git diff --quiet; then
+FIXED=$(git diff --name-only backend/src frontend/src)
+if [ -n "$FIXED" ]; then
   echo ""
   echo "ESLint applied automatic fixes to:"
-  git diff --name-only
+  echo "$FIXED"
   echo ""
   echo "Please review, stage, and commit these changes before pushing."
   exit 1
