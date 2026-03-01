@@ -39,26 +39,3 @@ jobs:
       - run: npm run lint
         working-directory: frontend
 
-  auto-merge:
-    name: Create PR and auto-merge
-    runs-on: ubuntu-latest
-    needs: [lint-backend, lint-frontend]
-    if: github.event_name == 'push'
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create PR and enable auto-merge
-        run: |
-          TITLE=$(git log -1 --format='%s')
-          BODY=$(git log -1 --format='%b')
-          PR_URL=$(gh pr create \
-            --base master \
-            --head "${{ github.ref_name }}" \
-            --title "$TITLE" \
-            --body "$BODY" \
-          2>/dev/null || gh pr view "${{ github.ref_name }}" --json url --jq '.url')
-          gh pr merge --auto --merge "$PR_URL"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
