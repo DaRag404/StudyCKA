@@ -42,6 +42,7 @@ export default function ExerciseDetail() {
   const userId            = useStore((s) => s.userId);
   const selectedId        = useStore((s) => s.selectedExerciseId);
   const sessionStatus     = useStore((s) => s.sessionStatus);
+  const setupStatus       = useStore((s) => s.setupStatus);
   const checkResult       = useStore((s) => s.checkResult);
   const setCheckResult    = useStore((s) => s.setCheckResult);
   const clearCheckResult  = useStore((s) => s.clearCheckResult);
@@ -50,7 +51,6 @@ export default function ExerciseDetail() {
   const [exercise, setExercise]   = useState(null);
   const [checking, setChecking]   = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [settingUp, setSettingUp] = useState(false);
   const [showHints, setShowHints] = useState(false);
 
   // Load exercise detail when selection changes
@@ -64,16 +64,8 @@ export default function ExerciseDetail() {
       .catch(console.error);
   }, [selectedId]);
 
-  // Auto-apply preconditions when exercise is selected and session is ready
-  useEffect(() => {
-    if (!selectedId || sessionStatus !== 'ready') return;
-    setSettingUp(true);
-    fetch(`/api/setup/${selectedId}?userId=${userId}`, { method: 'POST' })
-      .catch(console.error)
-      .finally(() => setSettingUp(false));
-  }, [selectedId, sessionStatus]);
-
-  const isReady = sessionStatus === 'ready' && !settingUp;
+  const settingUp = setupStatus === 'running';
+  const isReady   = sessionStatus === 'ready' && !settingUp;
 
   async function handleCheck() {
     if (!isReady || !selectedId) return;

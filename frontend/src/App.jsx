@@ -9,10 +9,11 @@ const MIN_PANEL_PX   = 120;  // minimum height for either panel
 const TOOLBAR_H      = 34;   // px — height of the terminal toolbar
 
 export default function App() {
-  const userId           = useStore((s) => s.userId);
-  const sessionStatus    = useStore((s) => s.sessionStatus);
-  const setSessionStatus = useStore((s) => s.setSessionStatus);
-  const setExercises     = useStore((s) => s.setExercises);
+  const userId              = useStore((s) => s.userId);
+  const sessionStatus       = useStore((s) => s.sessionStatus);
+  const setSessionStatus    = useStore((s) => s.setSessionStatus);
+  const setExercises        = useStore((s) => s.setExercises);
+  const triggerSetupIfNeeded = useStore((s) => s.triggerSetupIfNeeded);
 
   const pollingRef      = useRef(null);
   const rightColRef     = useRef(null);
@@ -125,6 +126,13 @@ export default function App() {
       stopPolling();
     }
     return stopPolling;
+  }, [sessionStatus]);
+
+  // When session becomes ready, apply preconditions for already-selected exercise
+  useEffect(() => {
+    if (sessionStatus === 'ready') {
+      triggerSetupIfNeeded();
+    }
   }, [sessionStatus]);
 
   return (
