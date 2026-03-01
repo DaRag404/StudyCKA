@@ -7,70 +7,19 @@ All notable changes to StudyCKA are documented here.
 ## [1.0.0] — 2026-03-01
 
 ### Added
-- **20 more exercises (26–45)** — 10 advanced troubleshooting exercises (Service TargetPort, DNS policy, ConfigMap key reference, Secret volume mount, PVC access mode, RBAC permissions, node selector, etc.) and 10 multi-step/debug exercises covering full app stacks, RBAC, PV binding chains, init containers, node affinity, readiness probes, and service selector debugging.
-- **Auto-cleanup on exercise select** — switching exercises now automatically removes all previous resources from the default namespace (pods, services, PVCs, roles, configmaps, network policies, node taints) before applying new preconditions.
-- **`type: command` precondition** — exercise preconditions can now run arbitrary shell commands in addition to applying manifests.
-
-### Fixed
-- **Terminal stability** — replaced Dockerode exec stream with node-pty for a proper POSIX PTY. Eliminates corruption artifacts, fixes vim arrow keys, Tab completion, and focus handling in all browsers including Edge.
-- **Terminal layout** — default split position set to 50/50 to prevent terminal corruption on initial load.
-
----
-
-## [0.3.0] — 2026-03-01
-
-### Added
-- **10 troubleshooting exercises (16–25)** — "break and fix" scenarios modelled on real CKA exam tasks:
-  - 16: Fix CrashLoopBackOff — container has a wrong entrypoint command
-  - 17: Fix ImagePullBackOff — typo in the image name (`ngnix` → `nginx`)
-  - 18: Fix Service returning no endpoints — label selector mismatch
-  - 19: Fix RBAC — pod-reader ClusterRole exists but ClusterRoleBinding is missing
-  - 20: Fix Pod stuck Pending — node has a `NoSchedule` taint the pod doesn't tolerate
-  - 21: Fix PVC stuck Pending — references a non-existent StorageClass
-  - 22: Fix Pod restarting — liveness probe targets the wrong port (9090 vs 80)
-  - 23: Fix OOMKilled — memory limit too low (4 Mi) for nginx to start
-  - 24: Fix wrong ServiceAccount — pod uses `default` SA instead of `api-sa`
-  - 25: Fix NetworkPolicy — `deny-all` blocks ingress; add an allow policy for port 80
-- **`type: command` precondition support** — exercise reset can now run arbitrary shell commands (e.g. `kubectl taint`) as setup steps, not only apply manifests. Exercise 20 uses this to apply the node taint during reset.
-- **`execCommand` exported from `docker.js`** — the low-level exec helper is now accessible to the reset route.
-
----
-
-## [0.2.0] — 2026-03-01
-
-### Added
-- **Resizable split panel** — drag handle between the exercise description and the terminal allows free vertical resizing. Clamped to a minimum of 120 px per panel.
-- **Terminal window controls** — the three dots in the terminal toolbar are now interactive:
-  - 🔴 Red — collapse terminal to toolbar only (description expands to fill panel)
-  - 🟡 Yellow — restore last drag split position (dimmed when already in split mode)
-  - 🟢 Green — maximise terminal (description hidden, terminal fills panel)
-  - Hovering the dot group reveals icon hints (✕ / ↕ / ⤢)
-- **Markdown rendering** — exercise descriptions now render full Markdown (bold, inline code, fenced code blocks, bullet lists, tables) via `react-markdown` + `remark-gfm` instead of plain text.
-- **Vite HMR volume mount** — `frontend/src`, `index.html`, and `vite.config.js` are now mounted as volumes so source changes are picked up by Vite's hot-reload without rebuilding the image.
-
-### Fixed
-- **Blank page on load** — `GET /@vite/client` was returning 403. Root causes: Vite 5.4 `Host` header security check (fixed by `allowedHosts: 'all'`) and nginx sending `Connection: upgrade` on plain HTTP requests to `/@vite/` (fixed by removing the redundant location block).
-- **Exercises API returning ENOENT** — path in `exercises.js` resolved to `/exercises` (filesystem root) instead of `/app/exercises`. Fixed `../../../` → `../../`.
-- **k3s overlayfs error on Windows/WSL2** — `overlayfs` snapshotter is unsupported inside Docker containers on WSL2. Fixed by adding `--snapshotter=native` to the k3s server startup flags.
-- **`docker compose restart` not applying rebuild** — documented and switched to `docker compose up --force-recreate` after image rebuilds.
-
-### Changed
-- **Sandbox base image** — switched from `rancher/k3s` (no `apk`) to `alpine:3.19` with k3s binary downloaded separately. All tools (`bash`, `vim`, `curl`, `jq`, `helm`, etc.) now install correctly via `apk`.
-- **nginx `/@vite/` location block removed** — the catch-all `/` location correctly handles both Vite HTTP requests and HMR WebSocket upgrades.
-
----
-
-## [0.1.0] — 2026-03-01
-
-### Added
-- Initial platform implementation.
-- **Frontend** — React 18 + Vite SPA with two-panel layout: exercise list sidebar and terminal panel.
-- **Terminal** — xterm.js v5 connected via WebSocket to a Docker TTY exec session (no node-pty). Supports resize events and binary PTY stream.
-- **Backend** — Node.js + Express REST API (`/api/exercises`, `/api/session`, `/api/reset`, `/api/check`) and WebSocket terminal handler.
-- **Per-user k3s sandbox** — each user session gets a dedicated Docker container running k3s (privileged, 768 MB RAM / 1.5 vCPU limit). Managed via Dockerode.
-- **Session lifecycle** — bootstrap on page load, polling until cluster Ready, idle cleanup after 45 minutes.
-- **Answer checking** — server-side `kubectl` exec inside the user's container; per-check pass/fail with expected vs actual output.
-- **Environment reset** — tears down and recreates the sandbox container, re-applies exercise preconditions.
-- **15 CKA exercises** covering: Pods, Deployments, Scaling, Services, Namespaces, ConfigMaps, Secrets, Resource Limits, Liveness Probes, Labels & Selectors, Init Containers, Jobs, CronJobs, PV/PVC, Rolling Updates.
-- **nginx reverse proxy** — routes `/api/`, `/terminal` (WebSocket), and `/` (Vite) through a single port 80.
-- **Docker Compose orchestration** — `sandbox-build`, `backend`, `frontend`, `nginx` services.
+- **45 hands-on CKA exercises** across three tracks:
+  - Core CKA (1–15): Pods, Deployments, Services, Namespaces, ConfigMaps, Secrets, Resource Limits, Liveness Probes, Labels & Selectors, Init Containers, Jobs, CronJobs, PV/PVC, Rolling Updates
+  - Troubleshooting (16–35): Break-and-fix scenarios — CrashLoopBackOff, ImagePullBackOff, RBAC misconfigurations, tainted nodes, wrong probes, OOMKilled, NetworkPolicies, DNS, ConfigMap/Secret mount errors, Service TargetPort, PVC AccessMode, node selector
+  - Multi-step & Debug (36–45): Full app stacks, RBAC chains, PV binding, init containers, node affinity, readiness probes, service selector debugging
+- **Per-user k3s sandbox** — each session gets a dedicated Docker container running k3s (privileged, 768 MB RAM / 1.5 vCPU), managed via Dockerode
+- **Browser terminal** — xterm.js v5 over WebSocket, backed by node-pty for a stable full-featured PTY (vim, arrow keys, Tab completion in all browsers)
+- **Answer checking** — server-side `kubectl` exec inside the user's container with per-check pass/fail feedback
+- **Environment reset** — tears down and recreates the sandbox, re-applies exercise preconditions
+- **Auto-cleanup on exercise select** — removes all previous namespace resources before applying new preconditions
+- **Resizable split panel** — drag handle between description and terminal; maximize/minimize controls
+- **Markdown rendering** — exercise descriptions render full Markdown via react-markdown + remark-gfm
+- **Exercise preconditions** — support for both `manifest` and `command` types
+- **Session lifecycle** — bootstrap on page load, status polling, idle cleanup after 45 minutes
+- **Progress persistence** — exercise pass/fail state stored in localStorage
+- **nginx reverse proxy** — single port 80 for HTTP, API, and WebSocket traffic
+- **Vite HMR** — frontend source mounted as a volume; changes hot-reload without rebuilding the image
