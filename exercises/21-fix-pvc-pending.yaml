@@ -1,0 +1,87 @@
+id: "21"
+title: "Fix: PVC Stuck in Pending"
+difficulty: "medium"
+category: "Troubleshooting"
+order: 21
+description: |
+  A PersistentVolumeClaim named `data-pvc` is stuck in **Pending** state.
+  A Pod named `data-pod` is waiting for it and cannot start.
+
+  **Investigate:**
+  ```
+  kubectl get pvc data-pvc
+  kubectl describe pvc data-pvc
+  kubectl get storageclass
+  ```
+
+  The PVC is requesting a StorageClass that **does not exist** in this cluster.
+  k3s ships with a built-in StorageClass called `local-path`.
+
+  **Fix:** Patch the PVC to use the correct StorageClass.
+
+  Since you cannot edit `storageClassName` on an existing PVC, delete and recreate it:
+  ```
+  kubectl delete pvc data-pvc
+  ```
+
+  Then recreate with the correct StorageClass:
+  ```yaml
+  apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: data-pvc
+    namespace: default
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: local-path
+    resources:
+      requests:
+        storage: 500Mi
+  ```
+
+  **Verify:**
+  ```
+  kubectl get pvc data-pvc
+  # STATUS → Bound (may take a few seconds)
+  ```
+hints:
+  - "`kubectl get storageclass` lists available storage classes in the cluster"
+  - "k3s's built-in provisioner is `local-path` — this is what you should use"
+  - "`storageClassName` is immutable on a PVC — you must delete and recreate it"
+validation:
+  - args: ["get", "pvc", "data-pvc", "-o", "jsonpath={.spec.storageClassName}"]
+    expect: "local-path"
+    description: "PVC references the existing local-path StorageClass"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data-pvc
+        namespace: default
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: fast-nvme-storage
+        resources:
+          requests:
+            storage: 500Mi
+      ---
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: data-pod
+        namespace: default
+      spec:
+        volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-pvc
+        containers:
+        - name: nginx
+          image: nginx:1.25
+          volumeMounts:
+          - name: data
+            mountPath: /data

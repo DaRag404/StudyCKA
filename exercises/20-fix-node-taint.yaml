@@ -1,0 +1,63 @@
+id: "20"
+title: "Fix: Pod Stuck in Pending (Node Taint)"
+difficulty: "medium"
+category: "Troubleshooting"
+order: 20
+description: |
+  A Pod named `pending-pod` is stuck in **Pending** state and cannot be scheduled.
+
+  **Investigate:**
+  ```
+  kubectl get pod pending-pod
+  kubectl describe pod pending-pod
+  # Look at the Events section — "didn't match"
+
+  kubectl describe node | grep -A5 Taints
+  ```
+
+  The node has a taint that the pod does not tolerate.
+
+  **Fix option A** — Remove the taint from the node (use `-` suffix to remove):
+  ```
+  kubectl taint node <node-name> env=production:NoSchedule-
+  ```
+
+  **Fix option B** — Add a toleration to the pod so it can run on the tainted node:
+  ```yaml
+  spec:
+    tolerations:
+    - key: "env"
+      operator: "Equal"
+      value: "production"
+      effect: "NoSchedule"
+  ```
+
+  For this exercise, **remove the taint** from the node.
+
+  **Verify:**
+  ```
+  kubectl get pod pending-pod
+  # STATUS → Running (may take a few seconds)
+  ```
+hints:
+  - "`kubectl describe pod pending-pod` — Events will say '0/1 nodes are available: 1 node(s) had untolerated taint'"
+  - "To remove a taint, use the same command that adds it but add a `-` at the end: `key=value:Effect-`"
+  - "Find the node name with `kubectl get nodes`"
+validation:
+  - args: ["get", "node", "-o", "jsonpath={.items[0].spec.taints}"]
+    expect: ""
+    description: "The env=production:NoSchedule taint has been removed from the node"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: pending-pod
+        namespace: default
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.25
+  - type: command
+    command: "kubectl taint nodes --all env=production:NoSchedule --overwrite"

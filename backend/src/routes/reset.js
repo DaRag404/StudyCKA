@@ -39,6 +39,9 @@ router.post('/:exerciseId', async (req, res) => {
         for (const pre of exercise.preconditions) {
           if (pre.type === 'manifest') {
             await sandbox.applyManifest(containerId, pre.manifest);
+          } else if (pre.type === 'command') {
+            const shellCmd = Array.isArray(pre.command) ? pre.command.join(' ') : pre.command;
+            await sandbox.execCommand(containerId, ['sh', '-c', shellCmd]);
           }
         }
       }
