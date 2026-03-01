@@ -1,10 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import useStore from './store.js';
 import ExerciseList   from './components/ExerciseList.jsx';
 import ExerciseDetail from './components/ExerciseDetail.jsx';
 import TerminalPanel  from './components/TerminalPanel.jsx';
 
-const POLL_INTERVAL = 3000; // ms
+const POLL_INTERVAL  = 3000; // ms
+const MIN_PANEL_PX   = 120;  // minimum height for either panel
+const TOOLBAR_H      = 34;   // px — height of the terminal toolbar
 
 export default function App() {
   const userId           = useStore((s) => s.userId);
@@ -12,7 +14,56 @@ export default function App() {
   const setSessionStatus = useStore((s) => s.setSessionStatus);
   const setExercises     = useStore((s) => s.setExercises);
 
-  const pollingRef = useRef(null);
+  const pollingRef      = useRef(null);
+  const rightColRef     = useRef(null);
+  const [descHeight,    setDescHeight]    = useState(280);   // px, used in 'split' mode
+  const [terminalMode,  setTerminalMode]  = useState('split'); // 'split' | 'term-max' | 'desc-max'
+
+  // ── Drag-to-resize (only active in 'split' mode) ──────────────────────────
+  const startResize = useCallback((e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = descHeight;
+
+    const onMove = (ev) => {
+      const containerH = rightColRef.current?.clientHeight ?? 800;
+      const newH = Math.min(
+        containerH - MIN_PANEL_PX - 8,
+        Math.max(MIN_PANEL_PX, startH + ev.clientY - startY)
+      );
+      setDescHeight(newH);
+    };
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [descHeight]);
+
+  // ── Terminal window controls ──────────────────────────────────────────────
+  const collapseTerminal = useCallback(() => setTerminalMode('desc-max'), []);
+  const restoreSplit     = useCallback(() => setTerminalMode('split'),    []);
+  const maximizeTerminal = useCallback(() => setTerminalMode('term-max'), []);
+
+  // ── Layout styles per mode ────────────────────────────────────────────────
+  const descStyle = {
+    'split':    { height: descHeight, flexShrink: 0 },
+    'term-max': { height: 0,          flexShrink: 0, overflow: 'hidden' },
+    'desc-max': { flex: '1 1 0',      minHeight: 0  },
+  }[terminalMode];
+
+  const termStyle = {
+    'split':    { flex: '1 1 0', minHeight: 0 },
+    'term-max': { flex: '1 1 0', minHeight: 0 },
+    'desc-max': { height: TOOLBAR_H, flexShrink: 0 },
+  }[terminalMode];
 
   // Bootstrap session on mount
   useEffect(() => {
@@ -83,17 +134,40 @@ export default function App() {
         <ExerciseList />
       </div>
 
-      {/* Right side: split vertically between detail and terminal */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Exercise detail pane (fixed height) */}
-        <div className="h-80 flex-shrink-0 border-b border-gray-700 flex flex-col">
+      {/* Right side: vertically resizable split */}
+      <div ref={rightColRef} className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* Exercise detail panel */}
+        <div style={descStyle} className="overflow-hidden flex flex-col">
           <ExerciseDetail />
         </div>
 
-        {/* Terminal fills remaining space */}
-        <div className="flex-1 min-h-0">
-          <TerminalPanel />
+        {/* Drag handle — only visible in split mode */}
+        {terminalMode === 'split' && (
+          <div
+            onMouseDown={startResize}
+            className="group relative flex items-center justify-center flex-shrink-0 cursor-row-resize select-none"
+            style={{ height: 8 }}
+          >
+            <div className="absolute inset-0 bg-gray-700 group-hover:bg-blue-600 transition-colors duration-150" />
+            <div className="relative z-10 flex gap-1">
+              <span className="w-1 h-1 rounded-full bg-gray-500 group-hover:bg-blue-200" />
+              <span className="w-1 h-1 rounded-full bg-gray-500 group-hover:bg-blue-200" />
+              <span className="w-1 h-1 rounded-full bg-gray-500 group-hover:bg-blue-200" />
+            </div>
+          </div>
+        )}
+
+        {/* Terminal panel */}
+        <div style={termStyle} className="overflow-hidden">
+          <TerminalPanel
+            onCollapse={collapseTerminal}
+            onRestore={restoreSplit}
+            onExpand={maximizeTerminal}
+            terminalMode={terminalMode}
+          />
         </div>
+
       </div>
     </div>
   );

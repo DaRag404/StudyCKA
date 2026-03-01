@@ -5,7 +5,7 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
 import useStore from '../store.js';
 
-export default function TerminalPanel() {
+export default function TerminalPanel({ onCollapse, onRestore, onExpand, terminalMode }) {
   const userId        = useStore((s) => s.userId);
   const sessionStatus = useStore((s) => s.sessionStatus);
 
@@ -168,10 +168,39 @@ export default function TerminalPanel() {
       {/* Terminal toolbar */}
       <div className="flex items-center justify-between px-4 py-1.5 bg-gray-900 border-b border-gray-700 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-red-500/70" />
-            <span className="w-3 h-3 rounded-full bg-yellow-500/70" />
-            <span className="w-3 h-3 rounded-full bg-green-500/70" />
+          {/* Window control dots */}
+          <div className="flex gap-1.5 group/dots">
+            <button
+              onClick={onCollapse}
+              title="Collapse terminal"
+              className="w-3 h-3 rounded-full bg-red-500/70 hover:bg-red-500 transition-colors flex items-center justify-center"
+            >
+              <span className="hidden group-hover/dots:block text-red-900 leading-none" style={{ fontSize: 8, marginTop: -1 }}>✕</span>
+            </button>
+            <button
+              onClick={onRestore}
+              title="Restore split"
+              className={`w-3 h-3 rounded-full transition-colors flex items-center justify-center ${
+                terminalMode === 'split'
+                  ? 'bg-yellow-500/30 cursor-default'
+                  : 'bg-yellow-500/70 hover:bg-yellow-500'
+              }`}
+              disabled={terminalMode === 'split'}
+            >
+              <span className="hidden group-hover/dots:block text-yellow-900 leading-none" style={{ fontSize: 8, marginTop: -1 }}>↕</span>
+            </button>
+            <button
+              onClick={onExpand}
+              title="Maximise terminal"
+              className={`w-3 h-3 rounded-full transition-colors flex items-center justify-center ${
+                terminalMode === 'term-max'
+                  ? 'bg-green-500/30 cursor-default'
+                  : 'bg-green-500/70 hover:bg-green-500'
+              }`}
+              disabled={terminalMode === 'term-max'}
+            >
+              <span className="hidden group-hover/dots:block text-green-900 leading-none" style={{ fontSize: 8, marginTop: -1 }}>⤢</span>
+            </button>
           </div>
           <span className="text-gray-500 text-xs ml-1 font-mono">bash — cka-lab</span>
         </div>
