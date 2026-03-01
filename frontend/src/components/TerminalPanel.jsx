@@ -56,6 +56,16 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
     term.loadAddon(webLinksAddon);
     term.open(containerRef.current);
     fitAddon.fit();
+    term.focus();
+
+    // Prevent Edge/Chrome from stealing Tab (for browser focus navigation)
+    // and other special keys before xterm.js can process them.
+    term.attachCustomKeyEventHandler((ev) => {
+      if (ev.type === 'keydown' && (ev.key === 'Tab' || ev.key === 'F5')) {
+        ev.preventDefault();
+      }
+      return true;
+    });
 
     termRef.current = term;
     fitRef.current  = fitAddon;
@@ -102,6 +112,7 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
 
     ws.onopen = () => {
       term.clear();
+      term.focus();
       const sendSize = () => {
         try { fitRef.current?.fit(); } catch (_) {}
         if (ws.readyState === WebSocket.OPEN) {
