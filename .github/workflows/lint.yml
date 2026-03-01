@@ -49,19 +49,16 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - name: Create PR if not exists
+      - name: Create PR and enable auto-merge
         run: |
           TITLE=$(git log -1 --format='%s')
           BODY=$(git log -1 --format='%b')
-          gh pr create \
+          PR_URL=$(gh pr create \
             --base master \
             --head "${{ github.ref_name }}" \
             --title "$TITLE" \
             --body "$BODY" \
-          || true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Enable auto-merge
-        run: gh pr merge --auto --merge "${{ github.ref_name }}"
+          2>/dev/null || gh pr view "${{ github.ref_name }}" --json url --jq '.url')
+          gh pr merge --auto --merge "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
