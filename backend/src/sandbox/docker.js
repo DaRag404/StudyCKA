@@ -142,14 +142,16 @@ async function openTerminal(containerId) {
   const container = docker.getContainer(containerId);
 
   const exec = await container.exec({
-    Cmd: ['/bin/bash', '--login'],
+    Cmd: ['/bin/bash', '--login', '-i'],
     AttachStdin:  true,
     AttachStdout: true,
     AttachStderr: true,
     Tty: true,
+    WorkingDir: '/root',
     Env: [
       `KUBECONFIG=${KUBECONFIG}`,
       'TERM=xterm-256color',
+      'HOME=/root',
     ],
   });
 
