@@ -4,7 +4,16 @@ All notable changes to StudyCKA are documented here.
 
 ---
 
-## [Unreleased]
+## [1.0.0] — 2026-03-01
+
+### Added
+- **20 more exercises (26–45)** — 10 advanced troubleshooting exercises (Service TargetPort, DNS policy, ConfigMap key reference, Secret volume mount, PVC access mode, RBAC permissions, node selector, etc.) and 10 multi-step/debug exercises covering full app stacks, RBAC, PV binding chains, init containers, node affinity, readiness probes, and service selector debugging.
+- **Auto-cleanup on exercise select** — switching exercises now automatically removes all previous resources from the default namespace (pods, services, PVCs, roles, configmaps, network policies, node taints) before applying new preconditions.
+- **`type: command` precondition** — exercise preconditions can now run arbitrary shell commands in addition to applying manifests.
+
+### Fixed
+- **Terminal stability** — replaced Dockerode exec stream with node-pty for a proper POSIX PTY. Eliminates corruption artifacts, fixes vim arrow keys, Tab completion, and focus handling in all browsers including Edge.
+- **Terminal layout** — default split position set to 50/50 to prevent terminal corruption on initial load.
 
 ---
 
