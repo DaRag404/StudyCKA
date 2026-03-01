@@ -2,3 +2,10 @@ node_modules/
 dist/
 .env
 *.log
+
+# Local Claude Code config
+.claude/
+CLAUDE.md
+
+# Local git hooks
+.husky/
