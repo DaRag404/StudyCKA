@@ -6,6 +6,14 @@
 - Never commit directly to `master`.
 - All changes must go through a branch before being merged.
 
+## Quality Gates (Before Merge to Master)
+- Linting must run automatically before push.
+- All lint errors must be automatically fixed when possible (e.g. via `--fix`).
+- No lint errors may remain after automatic fixes.
+- Run all relevant tests and ensure they pass.
+- Do not merge to `master` if any checks fail.
+- Prefer automated checks (e.g. CI) when available.
+
 ## Push & CI Workflow (follow this order every time)
 1. Commit changes on a feature branch and push: `git push -u origin <branch>`
 2. GitHub Actions runs lint automatically (`.github/workflows/lint.yml`).
@@ -15,11 +23,12 @@
    enables auto-merge — the branch is merged to `master` automatically.
 5. Never manually merge or create PRs; let the CI handle it.
 
-## Quality Gates (Before Merge to Master)
-- Run JavaScript linting and ensure no lint errors remain.
-- Run all relevant tests and ensure they pass.
-- Do not merge to `master` if any checks fail.
-- Prefer automated checks (e.g. CI) when available.
+## Pre-Push Requirements
+- Automatically run linting with auto-fix (e.g. `eslint --fix`).
+- Prevent push if:
+  - Lint errors remain after auto-fix
+  - Tests fail
+- This should be enforced via hooks (e.g. Husky, pre-commit, or similar).
 
 ## Commits
 - Follow the Conventional Commits specification.
