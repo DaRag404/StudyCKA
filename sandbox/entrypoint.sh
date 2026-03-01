@@ -4,15 +4,15 @@ set -e
 # Configure KUBECONFIG for all interactive shells
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-# Write .vimrc — fixes arrow keys and gives sensible defaults
+# Write .vimrc — fixes arrow keys, no colours, sensible defaults
 cat > /root/.vimrc << 'VIMRC'
 set nocompatible
 set backspace=indent,eol,start
 set noswapfile
-syntax on
-set number
-set hlsearch
-set incsearch
+syntax off
+set nonumber
+set nohls
+set t_Co=0
 set mouse=
 VIMRC
 
@@ -41,8 +41,8 @@ alias kgs='kubectl get services'
 alias kgn='kubectl get nodes'
 alias kga='kubectl get all'
 
-# Prompt: green hostname + blue path  (~ shows for /root)
-export PS1='\[\033[01;32m\]cka-lab\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+# Plain white prompt — no colour codes, avoids readline width miscalculation
+export PS1='cka-lab:\w\$ '
 BASHRC
 
 # .bash_profile ensures .bashrc is sourced for login shells

@@ -19,6 +19,7 @@ export default function ExerciseList() {
   const progress          = useStore((s) => s.exerciseProgress);
   const selectExercise    = useStore((s) => s.selectExercise);
   const sessionStatus     = useStore((s) => s.sessionStatus);
+  const resetProgress     = useStore((s) => s.resetProgress);
 
   const passed = Object.values(progress).filter((v) => v === 'passed').length;
 
@@ -33,10 +34,21 @@ export default function ExerciseList() {
             <p className="text-gray-400 text-xs">Kubernetes Lab</p>
           </div>
         </div>
-        <div className="mt-3 text-xs text-gray-400">
-          Progress:{' '}
-          <span className="text-emerald-400 font-semibold">{passed}</span>
-          <span className="text-gray-600"> / {exercises.length}</span>
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-xs text-gray-400">
+            Progress:{' '}
+            <span className="text-emerald-400 font-semibold">{passed}</span>
+            <span className="text-gray-600"> / {exercises.length}</span>
+          </div>
+          <button
+            onClick={() => {
+              if (window.confirm('Reset all exercise progress?')) resetProgress();
+            }}
+            title="Reset progress"
+            className="text-gray-600 hover:text-red-400 text-xs transition-colors"
+          >
+            ↺ Reset
+          </button>
         </div>
         {/* Progress bar */}
         <div className="mt-1.5 h-1.5 bg-gray-700 rounded-full overflow-hidden">

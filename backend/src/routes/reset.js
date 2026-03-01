@@ -32,6 +32,7 @@ router.post('/:exerciseId', async (req, res) => {
       sessions.set(userId, { status: 'waiting', containerId });
 
       await sandbox.waitForReady(containerId);
+      await sandbox.waitForSystemPodsReady(containerId);
 
       // Apply exercise preconditions if any
       const exercise = loadExercises().find((e) => e.id === exerciseId);
