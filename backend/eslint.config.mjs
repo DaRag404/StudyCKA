@@ -11,6 +11,7 @@ export default [
       ecmaVersion: 'latest',
     },
     rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
       'no-unused-vars': ['error', {
         varsIgnorePattern: '^_',
         argsIgnorePattern: '^_',
