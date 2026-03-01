@@ -30,7 +30,8 @@ echo 'export KUBECONFIG=/etc/rancher/k3s/k3s.yaml' >> /etc/profile
 # Start k3s server as PID 1
 # --disable=traefik  → skip the ingress controller (saves RAM)
 # --disable=metrics-server → skip metrics-server (saves RAM)
-exec /bin/k3s server \
+exec /usr/local/bin/k3s server \
   --disable=traefik \
   --disable=metrics-server \
-  --write-kubeconfig-mode=644
+  --write-kubeconfig-mode=644 \
+  --snapshotter=native

@@ -7,7 +7,7 @@ const yaml    = require('js-yaml');
 
 const router  = express.Router();
 
-const EXERCISES_DIR = path.resolve(__dirname, '../../../exercises');
+const EXERCISES_DIR = path.resolve(__dirname, '../../exercises');
 
 let _cache = null;
 

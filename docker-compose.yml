@@ -37,6 +37,11 @@ services:
       context: ./frontend
     image: studycka-frontend:latest
     restart: unless-stopped
+    volumes:
+      # Mount source so Vite HMR picks up changes without rebuilding
+      - ./frontend/src:/app/src:ro
+      - ./frontend/index.html:/app/index.html:ro
+      - ./frontend/vite.config.js:/app/vite.config.js:ro
     expose:
       - "5173"
 
