@@ -135,34 +135,6 @@ async function execCommand(containerId, cmd) {
 }
 
 /**
- * Open an interactive TTY exec session and return { exec, stream }.
- * Caller wires the stream to/from a WebSocket.
- */
-async function openTerminal(containerId, cols = 220, rows = 50) {
-  const container = docker.getContainer(containerId);
-
-  const exec = await container.exec({
-    Cmd: ['/bin/bash', '--login'],
-    AttachStdin:  true,
-    AttachStdout: true,
-    AttachStderr: true,
-    Tty: true,
-    WorkingDir: '/root',
-    Env: [
-      `KUBECONFIG=${KUBECONFIG}`,
-      'TERM=xterm-256color',
-      'HOME=/root',
-    ],
-  });
-
-  // Start with the correct initial PTY dimensions so bash never sees a wrong size
-  const stream = await exec.start({ hijack: true, stdin: true, ConsoleSize: [rows, cols] });
-  // Belt-and-suspenders: also send resize via exec API
-  exec.resize({ h: rows, w: cols }).catch(() => {});
-  return { exec, stream };
-}
-
-/**
  * Poll until all kube-system pods have left Pending / ContainerCreating.
  * Call this after waitForReady() so exercise preconditions can be scheduled.
  * Does NOT throw on timeout — it logs and continues so the exercise still loads.
@@ -206,5 +178,4 @@ module.exports = {
   applyManifest,
   kubectlExec,
   execCommand,
-  openTerminal,
 };

@@ -17,7 +17,7 @@ export default function App() {
 
   const pollingRef      = useRef(null);
   const rightColRef     = useRef(null);
-  const [descHeight,    setDescHeight]    = useState(280);   // px, used in 'split' mode
+  const [descHeight,    setDescHeight]    = useState(() => Math.floor(window.innerHeight / 2)); // px, used in 'split' mode
   const [terminalMode,  setTerminalMode]  = useState('split'); // 'split' | 'term-max' | 'desc-max'
 
   // ── Drag-to-resize (only active in 'split' mode) ──────────────────────────
