@@ -1,0 +1,47 @@
+id: "08"
+title: "Set Resource Requests and Limits"
+difficulty: "medium"
+category: "Workloads"
+order: 8
+description: |
+  Create a Pod named `limited` using image `nginx:1.25` with the following resource constraints:
+
+  | Field           | Value  |
+  |----------------|--------|
+  | CPU request     | 100m   |
+  | Memory request  | 128Mi  |
+  | CPU limit       | 200m   |
+  | Memory limit    | 256Mi  |
+
+  **Resource requests** are used by the scheduler to decide which node to place the Pod on.
+  **Resource limits** prevent a container from using more than its allocation.
+
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: limited
+  spec:
+    containers:
+    - name: nginx
+      image: nginx:1.25
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+  ```
+hints:
+  - "1000m (millicores) = 1 CPU core. 100m = 10% of a CPU core"
+  - "Save the YAML to a file and apply with `kubectl apply -f <file>.yaml`"
+  - "Verify: `kubectl get pod limited -o jsonpath={.spec.containers[0].resources}`"
+validation:
+  - args: ["get", "pod", "limited", "-o", "jsonpath={.spec.containers[0].resources.requests.cpu}"]
+    expect: "100m"
+    description: "CPU request is 100m"
+  - args: ["get", "pod", "limited", "-o", "jsonpath={.spec.containers[0].resources.limits.memory}"]
+    expect: "256Mi"
+    description: "Memory limit is 256Mi"
+preconditions: []

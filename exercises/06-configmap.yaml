@@ -1,0 +1,47 @@
+id: "06"
+title: "Create a ConfigMap and Use It"
+difficulty: "medium"
+category: "Configuration"
+order: 6
+description: |
+  Create a ConfigMap named `app-config` in the `default` namespace with the following key-value pair:
+  - `APP_ENV=production`
+
+  Then create a Pod named `app` using image `nginx:1.25` that reads `APP_ENV`
+  from the ConfigMap as an environment variable.
+
+  **Step 1 — Create the ConfigMap:**
+  ```
+  kubectl create configmap app-config --from-literal=APP_ENV=production
+  ```
+
+  **Step 2 — Create the Pod using the ConfigMap:**
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: app
+  spec:
+    containers:
+    - name: app
+      image: nginx:1.25
+      env:
+      - name: APP_ENV
+        valueFrom:
+          configMapKeyRef:
+            name: app-config
+            key: APP_ENV
+  ```
+  Save as `pod-app.yaml` and run `kubectl apply -f pod-app.yaml`
+hints:
+  - "Use `kubectl create configmap --from-literal=KEY=VALUE` for inline key-value pairs"
+  - "Verify the ConfigMap: `kubectl get cm app-config -o yaml`"
+  - "Check the env inside the pod: `kubectl exec app -- env | grep APP_ENV`"
+validation:
+  - args: ["get", "cm", "app-config", "-o", "jsonpath={.data.APP_ENV}"]
+    expect: "production"
+    description: "ConfigMap app-config has APP_ENV=production"
+  - args: ["get", "pod", "app", "-o", "jsonpath={.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}"]
+    expect: "app-config"
+    description: "Pod app references app-config ConfigMap"
+preconditions: []

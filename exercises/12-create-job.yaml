@@ -1,0 +1,51 @@
+id: "12"
+title: "Create a Job"
+difficulty: "medium"
+category: "Workloads"
+order: 12
+description: |
+  Create a Job named `batch-job` that uses image `busybox:1.35` to run the command:
+  `echo Hello from batch job`.
+
+  Configure it with:
+  - `completions: 1`
+  - `backoffLimit: 3`
+
+  A Job creates one or more Pods and ensures a specified number complete successfully.
+  Unlike Deployments, Jobs are meant for finite tasks that run to completion.
+
+  ```yaml
+  apiVersion: batch/v1
+  kind: Job
+  metadata:
+    name: batch-job
+  spec:
+    completions: 1
+    backoffLimit: 3
+    template:
+      spec:
+        restartPolicy: Never
+        containers:
+        - name: worker
+          image: busybox:1.35
+          command: ["echo", "Hello from batch job"]
+  ```
+
+  **Verify:**
+  ```
+  kubectl get jobs
+  kubectl get pods -l job-name=batch-job
+  kubectl logs -l job-name=batch-job
+  ```
+hints:
+  - "Jobs require `restartPolicy: Never` or `restartPolicy: OnFailure` — not `Always`"
+  - "`backoffLimit` sets how many times Kubernetes retries before marking the Job failed"
+  - "Use `kubectl create job batch-job --image=busybox:1.35 -- echo 'Hello'` for quick creation"
+validation:
+  - args: ["get", "job", "batch-job", "-o", "jsonpath={.spec.backoffLimit}"]
+    expect: "3"
+    description: "Job has backoffLimit of 3"
+  - args: ["get", "job", "batch-job", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
+    expect: "busybox:1.35"
+    description: "Job uses busybox:1.35"
+preconditions: []

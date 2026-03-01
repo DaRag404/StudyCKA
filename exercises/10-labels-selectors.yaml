@@ -1,0 +1,60 @@
+id: "10"
+title: "Labels and Selectors"
+difficulty: "easy"
+category: "Core Concepts"
+order: 10
+description: |
+  A Deployment named `web` already exists. Add the label `tier=frontend` to it,
+  then create a second Deployment named `api` with labels `app=api` and `tier=backend`.
+
+  Use label selectors to verify both workloads:
+  ```
+  kubectl get pods -l tier=frontend
+  kubectl get pods -l tier=backend
+  ```
+
+  **Step 1 — Label the existing deployment:**
+  ```
+  kubectl label deployment web tier=frontend
+  ```
+
+  **Step 2 — Create api deployment with labels:**
+  ```
+  kubectl create deployment api --image=nginx:1.25
+  kubectl label deployment api tier=backend
+  ```
+
+  Labels are key/value pairs attached to objects. Selectors let you filter and group
+  resources — they power Services, ReplicaSets, and NetworkPolicies.
+hints:
+  - "`kubectl get pods --show-labels` reveals all labels on pods"
+  - "Use `kubectl label <resource> <name> key=value` to add labels imperatively"
+  - "Labels on a Deployment are applied to the Deployment itself, not automatically to Pods"
+validation:
+  - args: ["get", "deploy", "web", "-o", "jsonpath={.metadata.labels.tier}"]
+    expect: "frontend"
+    description: "Deployment web has label tier=frontend"
+  - args: ["get", "deploy", "api", "-o", "jsonpath={.metadata.labels.tier}"]
+    expect: "backend"
+    description: "Deployment api has label tier=backend"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+        namespace: default
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25

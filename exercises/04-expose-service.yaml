@@ -1,0 +1,56 @@
+id: "04"
+title: "Expose a Service"
+difficulty: "easy"
+category: "Services & Networking"
+order: 4
+description: |
+  A Deployment named `web` is running. Expose it as a **ClusterIP** Service named `web`
+  on port **80**, targeting container port **80**.
+
+  A ClusterIP Service gives the Deployment a stable internal IP address that other
+  Pods inside the cluster can use to reach it.
+
+  **Imperative:**
+  ```
+  kubectl expose deployment web --port=80 --target-port=80 --type=ClusterIP
+  ```
+
+  **Verify:**
+  ```
+  kubectl get svc web
+  kubectl describe svc web
+  ```
+hints:
+  - "`kubectl expose deployment web --port=80` creates a ClusterIP service by default"
+  - "ClusterIP is the default service type — no need to specify `--type=ClusterIP` explicitly"
+  - "Check endpoints with `kubectl get endpoints web`"
+validation:
+  - args: ["get", "svc", "web", "-o", "jsonpath={.spec.type}"]
+    expect: "ClusterIP"
+    description: "Service type is ClusterIP"
+  - args: ["get", "svc", "web", "-o", "jsonpath={.spec.ports[0].port}"]
+    expect: "80"
+    description: "Service listens on port 80"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+        namespace: default
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25
+              ports:
+              - containerPort: 80

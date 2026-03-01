@@ -1,0 +1,75 @@
+id: "15"
+title: "Rolling Update Strategy"
+difficulty: "hard"
+category: "Workloads"
+order: 15
+description: |
+  A Deployment named `web` is running `nginx:1.24`. Perform a rolling update to `nginx:1.25`
+  and configure the rolling update strategy with:
+  - `maxSurge: 1`
+  - `maxUnavailable: 0`
+
+  A rolling update replaces old Pods with new ones gradually, ensuring zero downtime.
+  `maxSurge` controls how many extra Pods can be created above the desired count.
+  `maxUnavailable` controls how many Pods can be unavailable during the update.
+
+  **Step 1 — Update the image:**
+  ```
+  kubectl set image deployment/web nginx=nginx:1.25
+  ```
+
+  **Step 2 — Configure the update strategy (patch or edit):**
+  ```
+  kubectl patch deployment web -p '{
+    "spec": {
+      "strategy": {
+        "type": "RollingUpdate",
+        "rollingUpdate": {
+          "maxSurge": 1,
+          "maxUnavailable": 0
+        }
+      }
+    }
+  }'
+  ```
+
+  **Monitor the rollout:**
+  ```
+  kubectl rollout status deployment/web
+  kubectl rollout history deployment/web
+  ```
+hints:
+  - "`kubectl rollout undo deployment/web` rolls back to the previous version"
+  - "`maxUnavailable: 0` with `maxSurge: 1` means Kubernetes always adds one new Pod before removing an old one"
+  - "Use `kubectl set image` for quick image updates without editing YAML"
+validation:
+  - args: ["get", "deploy", "web", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
+    expect: "nginx:1.25"
+    description: "Deployment uses updated image nginx:1.25"
+  - args: ["get", "deploy", "web", "-o", "jsonpath={.spec.strategy.rollingUpdate.maxUnavailable}"]
+    expect: "0"
+    description: "maxUnavailable is 0"
+  - args: ["get", "deploy", "web", "-o", "jsonpath={.spec.strategy.rollingUpdate.maxSurge}"]
+    expect: "1"
+    description: "maxSurge is 1"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+        namespace: default
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.24

@@ -1,0 +1,44 @@
+id: "11"
+title: "Init Container"
+difficulty: "medium"
+category: "Workloads"
+order: 11
+description: |
+  Create a Pod named `init-pod` using image `nginx:1.25` that has an **init container**
+  named `init` using image `busybox:1.35` that runs the command: `echo Initializing`.
+
+  Init containers run to completion before the main container starts. They are useful
+  for setup tasks: waiting for dependencies, seeding data, or checking prerequisites.
+
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: init-pod
+  spec:
+    initContainers:
+    - name: init
+      image: busybox:1.35
+      command: ["echo", "Initializing"]
+    containers:
+    - name: nginx
+      image: nginx:1.25
+  ```
+
+  **Verify:**
+  ```
+  kubectl get pod init-pod
+  kubectl describe pod init-pod | grep -A5 "Init Containers"
+  ```
+hints:
+  - "Init containers are defined under `spec.initContainers`, not `spec.containers`"
+  - "If an init container fails, the Pod restarts (following the restart policy)"
+  - "Multiple init containers run sequentially, not in parallel"
+validation:
+  - args: ["get", "pod", "init-pod", "-o", "jsonpath={.spec.initContainers[0].name}"]
+    expect: "init"
+    description: "Pod has an init container named init"
+  - args: ["get", "pod", "init-pod", "-o", "jsonpath={.spec.initContainers[0].image}"]
+    expect: "busybox:1.35"
+    description: "Init container uses busybox:1.35"
+preconditions: []

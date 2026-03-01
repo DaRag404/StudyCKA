@@ -1,0 +1,56 @@
+id: "03"
+title: "Scale a Deployment"
+difficulty: "easy"
+category: "Workloads"
+order: 3
+description: |
+  A Deployment named `web` already exists with 1 replica. Scale it to **5 replicas**.
+
+  Scaling a Deployment changes the number of Pod replicas managed by the ReplicaSet.
+  Kubernetes will reconcile to the desired state.
+
+  **Options:**
+
+  Imperative (fastest):
+  ```
+  kubectl scale deployment web --replicas=5
+  ```
+
+  Edit live resource:
+  ```
+  kubectl edit deployment web
+  # Change spec.replicas from 1 to 5
+  ```
+
+  Patch:
+  ```
+  kubectl patch deployment web -p '{"spec":{"replicas":5}}'
+  ```
+hints:
+  - "`kubectl scale deployment web --replicas=5` is the quickest approach"
+  - "Verify with `kubectl get deployment web` — check the READY column"
+validation:
+  - args: ["get", "deploy", "web", "-o", "jsonpath={.spec.replicas}"]
+    expect: "5"
+    description: "Deployment has 5 replicas"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+        namespace: default
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25
