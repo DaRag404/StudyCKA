@@ -11,6 +11,8 @@ const { loadExercises } = require('./exercises');
 const CLEANUP_CMD = [
   'sh', '-c',
   [
+    // Remove any node taints left by previous exercises (e.g. exercise 20 NoSchedule taint)
+    'kubectl taint nodes --all env=production:NoSchedule- 2>/dev/null || true',
     'kubectl delete all          --all -n default --force --grace-period=0 --ignore-not-found=true --wait=false',
     'kubectl delete networkpolicies --all -n default --ignore-not-found=true',
     'kubectl delete pvc          --all -n default --force --grace-period=0 --ignore-not-found=true',
@@ -37,10 +39,13 @@ router.post('/:exerciseId', async (req, res) => {
   }
 
   try {
-    // Step 1: clean previous exercise resources
+    // Step 1: clean previous exercise resources (includes taint removal)
     await sandbox.execCommand(session.containerId, CLEANUP_CMD);
 
-    // Step 2: apply preconditions for the new exercise
+    // Step 2: wait for kube-system pods to recover (taint removal may unblock them)
+    await sandbox.waitForSystemPodsReady(session.containerId);
+
+    // Step 3: apply preconditions for the new exercise
     const exercise = loadExercises().find((e) => e.id === exerciseId);
     if (exercise?.preconditions?.length) {
       for (const pre of exercise.preconditions) {
@@ -53,7 +58,7 @@ router.post('/:exerciseId', async (req, res) => {
       }
     }
 
-    // Step 3: wait until all pods in default namespace have left ContainerCreating
+    // Step 4: wait until all pods in default namespace have left ContainerCreating
     await waitForPodsScheduled(session.containerId);
 
     res.json({ ok: true });

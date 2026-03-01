@@ -11,6 +11,24 @@ function getOrCreateUserId() {
   return id;
 }
 
+// Persist exercise progress across page reloads
+const PROGRESS_KEY = 'studycka_progress';
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveProgress(progress) {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  } catch (_) {}
+}
+
 const useStore = create((set, get) => ({
   userId: getOrCreateUserId(),
 
@@ -21,7 +39,7 @@ const useStore = create((set, get) => ({
   // Exercise state
   exercises: [],
   selectedExerciseId: null,
-  exerciseProgress: {}, // { [id]: 'none' | 'passed' | 'failed' }
+  exerciseProgress: loadProgress(), // { [id]: 'none' | 'passed' | 'failed' }
 
   // Check result for current exercise
   checkResult: null, // { passed, results }
@@ -59,16 +77,20 @@ const useStore = create((set, get) => ({
 
   setCheckResult: (result) => {
     const { selectedExerciseId, exerciseProgress } = get();
-    set({
-      checkResult: result,
-      exerciseProgress: {
-        ...exerciseProgress,
-        [selectedExerciseId]: result.passed ? 'passed' : 'failed',
-      },
-    });
+    const newProgress = {
+      ...exerciseProgress,
+      [selectedExerciseId]: result.passed ? 'passed' : 'failed',
+    };
+    saveProgress(newProgress);
+    set({ checkResult: result, exerciseProgress: newProgress });
   },
 
   clearCheckResult: () => set({ checkResult: null }),
+
+  resetProgress: () => {
+    localStorage.removeItem(PROGRESS_KEY);
+    set({ exerciseProgress: {} });
+  },
 }));
 
 export default useStore;

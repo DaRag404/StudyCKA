@@ -138,11 +138,11 @@ async function execCommand(containerId, cmd) {
  * Open an interactive TTY exec session and return { exec, stream }.
  * Caller wires the stream to/from a WebSocket.
  */
-async function openTerminal(containerId) {
+async function openTerminal(containerId, cols = 220, rows = 50) {
   const container = docker.getContainer(containerId);
 
   const exec = await container.exec({
-    Cmd: ['/bin/bash', '--login', '-i'],
+    Cmd: ['/bin/bash', '--login'],
     AttachStdin:  true,
     AttachStdout: true,
     AttachStderr: true,
@@ -155,8 +155,43 @@ async function openTerminal(containerId) {
     ],
   });
 
-  const stream = await exec.start({ hijack: true, stdin: true });
+  // Start with the correct initial PTY dimensions so bash never sees a wrong size
+  const stream = await exec.start({ hijack: true, stdin: true, ConsoleSize: [rows, cols] });
+  // Belt-and-suspenders: also send resize via exec API
+  exec.resize({ h: rows, w: cols }).catch(() => {});
   return { exec, stream };
+}
+
+/**
+ * Poll until all kube-system pods have left Pending / ContainerCreating.
+ * Call this after waitForReady() so exercise preconditions can be scheduled.
+ * Does NOT throw on timeout — it logs and continues so the exercise still loads.
+ */
+async function waitForSystemPodsReady(containerId, timeoutMs = 120_000) {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    try {
+      const { stdout } = await execCommand(containerId, [
+        'kubectl', '--kubeconfig', KUBECONFIG,
+        'get', 'pods', '-n', 'kube-system', '--no-headers',
+      ]);
+      const lines = stdout.trim().split('\n').filter(Boolean);
+      if (lines.length > 0) {
+        const notReady = lines.some((line) =>
+          line.includes('Pending') ||
+          line.includes('ContainerCreating') ||
+          line.includes('PodInitializing') ||
+          line.includes('Init:')
+        );
+        if (!notReady) return;
+      }
+    } catch (_) { /* not ready yet */ }
+
+    await sleep(3000);
+  }
+
+  console.warn('[waitForSystemPodsReady] timed out — continuing anyway');
 }
 
 function sleep(ms) {
@@ -167,6 +202,7 @@ module.exports = {
   createSandbox,
   removeSandbox,
   waitForReady,
+  waitForSystemPodsReady,
   applyManifest,
   kubectlExec,
   execCommand,
