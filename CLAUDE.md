@@ -15,13 +15,21 @@
 - Prefer automated checks (e.g. CI) when available.
 
 ## Push & CI Workflow (follow this order every time)
-1. Commit changes on a feature branch and push: `git push -u origin <branch>`
-2. GitHub Actions runs lint automatically (`.github/workflows/lint.yml`).
-3. If lint fails: check the logs with `gh run list --branch <branch>` and
-   `gh run view <run-id> --log-failed`, fix the errors, commit, and push again.
-4. When lint passes, the `auto-merge` job creates a PR (if none exists) and
-   enables auto-merge — the branch is merged to `master` automatically.
-5. Never manually merge or create PRs; let the CI handle it.
+1. Make sure you are on a feature branch — never commit to `master` directly.
+   If on `master`, stash changes, create the branch, then pop:
+   `git stash && git checkout -b <branch> && git stash pop`
+2. Commit and push: `git push -u origin <branch>`
+   The Husky pre-push hook runs `eslint --fix` automatically; if it modifies
+   files it aborts and asks you to commit the fixes first.
+3. GitHub Actions runs lint + auto-merge (`.github/workflows/lint.yml`).
+4. If CI fails: check with `gh run list --branch <branch>` then
+   `gh run view <run-id> --log-failed`, fix, commit, push again.
+5. When lint passes the `auto-merge` job:
+   - Creates a PR using `gh pr create` and captures the returned PR URL.
+   - Calls `gh pr merge --auto --merge <PR-URL>` (URL, not branch name —
+     branch names with `/` are unreliable with `gh pr merge`).
+   - The branch is merged to `master` automatically. No manual action needed.
+6. Never manually create PRs or merge branches; let CI handle it.
 
 ## Pre-Push Requirements
 - Automatically run linting with auto-fix (e.g. `eslint --fix`).
