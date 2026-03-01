@@ -1,0 +1,43 @@
+id: "09"
+title: "Configure a Liveness Probe"
+difficulty: "medium"
+category: "Workloads"
+order: 9
+description: |
+  Create a Pod named `probed` using image `nginx:1.25` with an HTTP **liveness probe**:
+  - Path: `/`
+  - Port: `80`
+  - Initial delay: `5` seconds
+  - Period: `10` seconds
+
+  A liveness probe tells Kubernetes when to restart a container. If the probe fails,
+  the kubelet kills the container and the Pod's restart policy applies.
+
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: probed
+  spec:
+    containers:
+    - name: nginx
+      image: nginx:1.25
+      livenessProbe:
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 5
+        periodSeconds: 10
+  ```
+hints:
+  - "There are three probe types: httpGet, tcpSocket, and exec"
+  - "`kubectl describe pod probed` shows probe status and any failures"
+  - "`failureThreshold` (default 3) controls how many failures before restart"
+validation:
+  - args: ["get", "pod", "probed", "-o", "jsonpath={.spec.containers[0].livenessProbe.httpGet.port}"]
+    expect: "80"
+    description: "Liveness probe targets port 80"
+  - args: ["get", "pod", "probed", "-o", "jsonpath={.spec.containers[0].livenessProbe.periodSeconds}"]
+    expect: "10"
+    description: "Probe period is 10 seconds"
+preconditions: []

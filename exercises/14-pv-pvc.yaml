@@ -1,0 +1,57 @@
+id: "14"
+title: "PersistentVolume and PersistentVolumeClaim"
+difficulty: "hard"
+category: "Storage"
+order: 14
+description: |
+  Create a PersistentVolumeClaim named `my-pvc` that requests **500Mi** of storage
+  with `ReadWriteOnce` access mode. k3s includes a local-path provisioner that will
+  automatically create a PersistentVolume to satisfy the claim.
+
+  Then create a Pod named `storage-pod` using image `nginx:1.25` that mounts
+  the PVC at `/usr/share/nginx/html`.
+
+  **Step 1 — Create the PVC:**
+  ```yaml
+  apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: my-pvc
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 500Mi
+  ```
+
+  **Step 2 — Create a Pod that uses it:**
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: storage-pod
+  spec:
+    volumes:
+    - name: storage
+      persistentVolumeClaim:
+        claimName: my-pvc
+    containers:
+    - name: nginx
+      image: nginx:1.25
+      volumeMounts:
+      - name: storage
+        mountPath: /usr/share/nginx/html
+  ```
+hints:
+  - "k3s's local-path provisioner auto-creates PVs — no need to create one manually"
+  - "PVC status goes `Pending` → `Bound` once a matching PV is created or found"
+  - "Check with `kubectl get pvc my-pvc` — wait for STATUS to be `Bound`"
+validation:
+  - args: ["get", "pvc", "my-pvc", "-o", "jsonpath={.spec.accessModes[0]}"]
+    expect: "ReadWriteOnce"
+    description: "PVC has ReadWriteOnce access mode"
+  - args: ["get", "pod", "storage-pod", "-o", "jsonpath={.spec.volumes[0].persistentVolumeClaim.claimName}"]
+    expect: "my-pvc"
+    description: "Pod mounts the my-pvc claim"
+preconditions: []

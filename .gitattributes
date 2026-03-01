@@ -1,0 +1,8 @@
+# Default: normalise to LF on commit, checkout as-is on Windows
+* text=auto eol=lf
+
+# Shell scripts must always have LF — they run inside Linux containers
+*.sh text eol=lf
+
+# Dockerfiles run in Linux context
+Dockerfile text eol=lf

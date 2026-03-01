@@ -1,0 +1,34 @@
+id: "02"
+title: "Create a Deployment"
+difficulty: "easy"
+category: "Workloads"
+order: 2
+description: |
+  Create a Deployment named `web` in the `default` namespace with the following spec:
+  - Image: `nginx:1.25`
+  - Replicas: `3`
+
+  A Deployment provides declarative updates for Pods and ReplicaSets. It ensures
+  that the desired number of pod replicas are running at all times.
+
+  **Your task:**
+  ```
+  kubectl create deployment web --image=nginx:1.25 --replicas=3
+  ```
+
+  Verify with:
+  ```
+  kubectl get deployment web
+  kubectl get pods -l app=web
+  ```
+hints:
+  - "Use `kubectl create deployment --replicas=3` to set the initial replica count"
+  - "Check with `kubectl get deploy web -o yaml` to inspect the full spec"
+validation:
+  - args: ["get", "deploy", "web", "-o", "jsonpath={.spec.replicas}"]
+    expect: "3"
+    description: "Deployment has 3 replicas"
+  - args: ["get", "deploy", "web", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
+    expect: "nginx:1.25"
+    description: "Deployment uses image nginx:1.25"
+preconditions: []

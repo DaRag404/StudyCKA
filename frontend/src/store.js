@@ -1,0 +1,52 @@
+import { create } from 'zustand';
+import { v4 as uuidv4 } from 'uuid';
+
+// Persist userId across page reloads
+function getOrCreateUserId() {
+  let id = localStorage.getItem('studycka_user_id');
+  if (!id) {
+    id = uuidv4();
+    localStorage.setItem('studycka_user_id', id);
+  }
+  return id;
+}
+
+const useStore = create((set, get) => ({
+  userId: getOrCreateUserId(),
+
+  // Session state from backend
+  sessionStatus: 'none', // none | starting | waiting | ready | resetting | error
+  sessionError: null,
+
+  // Exercise state
+  exercises: [],
+  selectedExerciseId: null,
+  exerciseProgress: {}, // { [id]: 'none' | 'passed' | 'failed' }
+
+  // Check result for current exercise
+  checkResult: null, // { passed, results }
+
+  // ── Actions ──────────────────────────────────────────────────────────────
+
+  setSessionStatus: (status, error = null) =>
+    set({ sessionStatus: status, sessionError: error }),
+
+  setExercises: (exercises) => set({ exercises }),
+
+  selectExercise: (id) => set({ selectedExerciseId: id, checkResult: null }),
+
+  setCheckResult: (result) => {
+    const { selectedExerciseId, exerciseProgress } = get();
+    set({
+      checkResult: result,
+      exerciseProgress: {
+        ...exerciseProgress,
+        [selectedExerciseId]: result.passed ? 'passed' : 'failed',
+      },
+    });
+  },
+
+  clearCheckResult: () => set({ checkResult: null }),
+}));
+
+export default useStore;
