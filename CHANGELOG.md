@@ -8,6 +8,25 @@ All notable changes to StudyCKA are documented here.
 
 ---
 
+## [0.3.0] — 2026-03-01
+
+### Added
+- **10 troubleshooting exercises (16–25)** — "break and fix" scenarios modelled on real CKA exam tasks:
+  - 16: Fix CrashLoopBackOff — container has a wrong entrypoint command
+  - 17: Fix ImagePullBackOff — typo in the image name (`ngnix` → `nginx`)
+  - 18: Fix Service returning no endpoints — label selector mismatch
+  - 19: Fix RBAC — pod-reader ClusterRole exists but ClusterRoleBinding is missing
+  - 20: Fix Pod stuck Pending — node has a `NoSchedule` taint the pod doesn't tolerate
+  - 21: Fix PVC stuck Pending — references a non-existent StorageClass
+  - 22: Fix Pod restarting — liveness probe targets the wrong port (9090 vs 80)
+  - 23: Fix OOMKilled — memory limit too low (4 Mi) for nginx to start
+  - 24: Fix wrong ServiceAccount — pod uses `default` SA instead of `api-sa`
+  - 25: Fix NetworkPolicy — `deny-all` blocks ingress; add an allow policy for port 80
+- **`type: command` precondition support** — exercise reset can now run arbitrary shell commands (e.g. `kubectl taint`) as setup steps, not only apply manifests. Exercise 20 uses this to apply the node taint during reset.
+- **`execCommand` exported from `docker.js`** — the low-level exec helper is now accessible to the reset route.
+
+---
+
 ## [0.2.0] — 2026-03-01
 
 ### Added
