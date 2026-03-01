@@ -152,6 +152,8 @@ async function openTerminal(containerId, cols = 220, rows = 50) {
       `KUBECONFIG=${KUBECONFIG}`,
       'TERM=xterm-256color',
       'HOME=/root',
+      `COLUMNS=${cols}`,
+      `LINES=${rows}`,
     ],
   });
 
