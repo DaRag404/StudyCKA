@@ -26,6 +26,9 @@ const useStore = create((set, get) => ({
   // Check result for current exercise
   checkResult: null, // { passed, results }
 
+  // Setup status for current exercise preconditions
+  setupStatus: 'idle', // idle | running | done | error
+
   // ── Actions ──────────────────────────────────────────────────────────────
 
   setSessionStatus: (status, error = null) =>
@@ -33,7 +36,26 @@ const useStore = create((set, get) => ({
 
   setExercises: (exercises) => set({ exercises }),
 
-  selectExercise: (id) => set({ selectedExerciseId: id, checkResult: null }),
+  selectExercise: (id) => {
+    const { userId, sessionStatus } = get();
+    set({ selectedExerciseId: id, checkResult: null, setupStatus: 'idle' });
+    if (sessionStatus === 'ready') {
+      set({ setupStatus: 'running' });
+      fetch(`/api/setup/${id}?userId=${userId}`, { method: 'POST' })
+        .then(() => set({ setupStatus: 'done' }))
+        .catch((e) => { console.error('[setup]', e); set({ setupStatus: 'error' }); });
+    }
+  },
+
+  // Called when session transitions to ready while an exercise is already selected
+  triggerSetupIfNeeded: () => {
+    const { userId, selectedExerciseId } = get();
+    if (!selectedExerciseId) return;
+    set({ setupStatus: 'running' });
+    fetch(`/api/setup/${selectedExerciseId}?userId=${userId}`, { method: 'POST' })
+      .then(() => set({ setupStatus: 'done' }))
+      .catch((e) => { console.error('[setup]', e); set({ setupStatus: 'error' }); });
+  },
 
   setCheckResult: (result) => {
     const { selectedExerciseId, exerciseProgress } = get();
