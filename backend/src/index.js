@@ -45,6 +45,8 @@ server.on('upgrade', (req, socket, head) => {
 wss.on('connection', async (ws, req) => {
   const { searchParams } = new URL(req.url, `http://localhost`);
   const userId = searchParams.get('userId');
+  const cols   = Math.max(40, parseInt(searchParams.get('cols') ?? '220', 10) || 220);
+  const rows   = Math.max(10, parseInt(searchParams.get('rows') ?? '50',  10) || 50);
 
   if (!userId) {
     ws.close(1008, 'userId required');
@@ -62,7 +64,7 @@ wss.on('connection', async (ws, req) => {
   let exec, stream;
 
   try {
-    ({ exec, stream } = await sandbox.openTerminal(session.containerId));
+    ({ exec, stream } = await sandbox.openTerminal(session.containerId, cols, rows));
   } catch (err) {
     console.error('[terminal] openTerminal failed:', err.message);
     ws.close(1011, 'Failed to open terminal');
