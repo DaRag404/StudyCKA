@@ -6,6 +6,15 @@
 - Never commit directly to `master`.
 - All changes must go through a branch before being merged.
 
+## Push & CI Workflow (follow this order every time)
+1. Commit changes on a feature branch and push: `git push -u origin <branch>`
+2. GitHub Actions runs lint automatically (`.github/workflows/lint.yml`).
+3. If lint fails: check the logs with `gh run list --branch <branch>` and
+   `gh run view <run-id> --log-failed`, fix the errors, commit, and push again.
+4. When lint passes, the `auto-merge` job creates a PR (if none exists) and
+   enables auto-merge — the branch is merged to `master` automatically.
+5. Never manually merge or create PRs; let the CI handle it.
+
 ## Quality Gates (Before Merge to Master)
 - Run JavaScript linting and ensure no lint errors remain.
 - Run all relevant tests and ensure they pass.
