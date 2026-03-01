@@ -15,10 +15,14 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
   const wsRef        = useRef(null);
   const roRef        = useRef(null);
 
-  /** Build the WebSocket URL (works for both http and https hosts). */
+  /** Build the WebSocket URL — includes current terminal dimensions so the
+   *  backend can start the PTY exec at the right size immediately. */
   function buildWsUrl() {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${window.location.host}/terminal?userId=${userId}`;
+    try { fitRef.current?.fit(); } catch (_) {}
+    const cols = termRef.current?.cols ?? 220;
+    const rows = termRef.current?.rows ?? 50;
+    return `${proto}://${window.location.host}/terminal?userId=${userId}&cols=${cols}&rows=${rows}`;
   }
 
   /** Mount xterm.js once on first render. */
@@ -98,11 +102,15 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
 
     ws.onopen = () => {
       term.clear();
-      // Send current terminal size immediately
-      ws.send(JSON.stringify({
-        type: 'resize',
-        data: { cols: term.cols, rows: term.rows },
-      }));
+      const sendSize = () => {
+        try { fitRef.current?.fit(); } catch (_) {}
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'resize', data: { cols: term.cols, rows: term.rows } }));
+        }
+      };
+      sendSize();
+      // Re-send after layout settles to correct any race with flex sizing
+      setTimeout(sendSize, 150);
     };
 
     ws.onmessage = (event) => {
