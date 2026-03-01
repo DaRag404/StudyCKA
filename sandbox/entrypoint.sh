@@ -14,10 +14,33 @@ set nonumber
 set nohls
 set t_Co=0
 set mouse=
-" Shorten escape-sequence timeout so arrow keys work in web terminals
+" Arrow keys: shorten escape-sequence wait for web terminal latency
 set ttimeout
 set ttimeoutlen=20
+" Disable terminal queries that arrive mid-redraw over WebSocket and corrupt
+" the display: bracketed-paste init, version request, cursor-position query
+set t_BE=
+set t_RV=
+set t_u7=
+" Disable character-level insert/delete optimisations (DCH1/ICH1).
+" Without these vim redraws full lines, which is slower but correct in
+" web terminals where cursor-relative edits get misaligned.
+set t_dc=
+set t_IC=
+" Encourage full-screen redraws instead of partial optimisations
+set ttyfast
+" Do not switch to application cursor key mode (DECCKM) on startup/exit.
+" Without this, vim sends \x1b[?1h on start and \x1b[?1l on exit; the
+" SS3 prefix (\x1bO) in that mode can leave a stray 'o' in the terminal.
+set t_ks=
+set t_ke=
 VIMRC
+
+# Append explicit CSI arrow key codes (normal cursor key mode sequences).
+# Must embed a literal ESC byte — cannot be written in a single-quote heredoc.
+_ESC=$(printf '\033')
+printf 'set t_ku=%s[A\nset t_kd=%s[B\nset t_kr=%s[C\nset t_kl=%s[D\n' \
+  "$_ESC" "$_ESC" "$_ESC" "$_ESC" >> /root/.vimrc
 
 # Write .bashrc — sourced by interactive shells
 cat > /root/.bashrc << 'BASHRC'
@@ -46,6 +69,9 @@ alias kga='kubectl get all'
 
 # Plain white prompt — no colour codes, avoids readline width miscalculation
 export PS1='cka-lab:\w\$ '
+
+# Disable bracketed paste in readline — prevents garbled prompts in web terminals
+bind 'set enable-bracketed-paste off' 2>/dev/null || true
 BASHRC
 
 # .bash_profile ensures .bashrc is sourced for login shells

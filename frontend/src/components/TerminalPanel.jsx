@@ -70,17 +70,29 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
     termRef.current = term;
     fitRef.current  = fitAddon;
 
-    // Resize observer — keep terminal size in sync with DOM
+    // Resize observer — debounced so rapid DOM changes don't flood the PTY
+    // with SIGWINCH signals (which corrupt readline's cursor tracking).
+    let resizeTimer = null;
+    let lastCols = term.cols;
+    let lastRows = term.rows;
     const ro = new ResizeObserver(() => {
-      try {
-        fitAddon.fit();
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify({
-            type: 'resize',
-            data: { cols: term.cols, rows: term.rows },
-          }));
-        }
-      } catch (_) {}
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        try {
+          fitAddon.fit();
+          if (
+            wsRef.current?.readyState === WebSocket.OPEN &&
+            (term.cols !== lastCols || term.rows !== lastRows)
+          ) {
+            lastCols = term.cols;
+            lastRows = term.rows;
+            wsRef.current.send(JSON.stringify({
+              type: 'resize',
+              data: { cols: term.cols, rows: term.rows },
+            }));
+          }
+        } catch (_) {}
+      }, 80);
     });
     ro.observe(containerRef.current);
     roRef.current = ro;
