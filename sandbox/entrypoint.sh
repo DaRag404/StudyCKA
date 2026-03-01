@@ -14,6 +14,9 @@ set nonumber
 set nohls
 set t_Co=0
 set mouse=
+" Shorten escape-sequence timeout so arrow keys work in web terminals
+set ttimeout
+set ttimeoutlen=20
 VIMRC
 
 # Write .bashrc — sourced by interactive shells
