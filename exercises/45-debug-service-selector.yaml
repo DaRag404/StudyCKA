@@ -9,8 +9,9 @@ description: |
   Fix selector.
 
 validation:
-  - args: ["get","endpoints","svc","-o","jsonpath={.subsets[0].addresses[0].ip}"]
-    expect: ".+"
+  - args: ["get","endpoints","svc","-o","jsonpath={.subsets}"]
+    expect: "10.42"
+    match: "contains"
     description: "Endpoints exist"
 preconditions:
   - type: manifest
