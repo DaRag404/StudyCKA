@@ -12,36 +12,17 @@ description: |
   the PVC at `/usr/share/nginx/html`.
 
   **Step 1 — Create the PVC:**
-  ```yaml
-  apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: my-pvc
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: 500Mi
+
+  A template has been placed at `/root/pvc.yaml`. Fill in the access mode and storage size, then apply it:
+  ```
+  kubectl apply -f /root/pvc.yaml
   ```
 
   **Step 2 — Create a Pod that uses it:**
-  ```yaml
-  apiVersion: v1
-  kind: Pod
-  metadata:
-    name: storage-pod
-  spec:
-    volumes:
-    - name: storage
-      persistentVolumeClaim:
-        claimName: my-pvc
-    containers:
-    - name: nginx
-      image: nginx:1.25
-      volumeMounts:
-      - name: storage
-        mountPath: /usr/share/nginx/html
+
+  A template has been placed at `/root/pod.yaml`. Fill in the mount path and apply it:
+  ```
+  kubectl apply -f /root/pod.yaml
   ```
 hints:
   - "k3s's local-path provisioner auto-creates PVs — no need to create one manually"
@@ -54,4 +35,35 @@ validation:
   - args: ["get", "pod", "storage-pod", "-o", "jsonpath={.spec.volumes[0].persistentVolumeClaim.claimName}"]
     expect: "my-pvc"
     description: "Pod mounts the my-pvc claim"
-preconditions: []
+preconditions:
+  - type: file
+    path: /root/pvc.yaml
+    content: |
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: my-pvc
+      spec:
+        accessModes:
+        - <access-mode>
+        resources:
+          requests:
+            storage: <storage>
+  - type: file
+    path: /root/pod.yaml
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: storage-pod
+      spec:
+        volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: my-pvc
+        containers:
+        - name: nginx
+          image: nginx:1.25
+          volumeMounts:
+          - name: storage
+            mountPath: <mount-path>

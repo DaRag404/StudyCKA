@@ -88,6 +88,16 @@ async function applyManifest(containerId, manifest) {
 }
 
 /**
+ * Write a file into the container at the given absolute path.
+ */
+async function writeFile(containerId, filePath, content) {
+  await execCommand(containerId, [
+    'sh', '-c',
+    `echo '${Buffer.from(content).toString('base64')}' | base64 -d > ${filePath}`,
+  ]);
+}
+
+/**
  * Run a kubectl command inside the container and return stdout.
  */
 async function kubectlExec(containerId, args) {
@@ -176,6 +186,7 @@ module.exports = {
   waitForReady,
   waitForSystemPodsReady,
   applyManifest,
+  writeFile,
   kubectlExec,
   execCommand,
 };

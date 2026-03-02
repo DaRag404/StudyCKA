@@ -14,21 +14,9 @@ description: |
   A Job creates one or more Pods and ensures a specified number complete successfully.
   Unlike Deployments, Jobs are meant for finite tasks that run to completion.
 
-  ```yaml
-  apiVersion: batch/v1
-  kind: Job
-  metadata:
-    name: batch-job
-  spec:
-    completions: 1
-    backoffLimit: 3
-    template:
-      spec:
-        restartPolicy: Never
-        containers:
-        - name: worker
-          image: busybox:1.35
-          command: ["echo", "Hello from batch job"]
+  A template has been placed at `/root/job.yaml`. Fill in the missing fields and apply it:
+  ```
+  kubectl apply -f /root/job.yaml
   ```
 
   **Verify:**
@@ -48,4 +36,21 @@ validation:
   - args: ["get", "job", "batch-job", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
     expect: "busybox:1.35"
     description: "Job uses busybox:1.35"
-preconditions: []
+preconditions:
+  - type: file
+    path: /root/job.yaml
+    content: |
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: batch-job
+      spec:
+        completions: <completions>
+        backoffLimit: <backoff-limit>
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+            - name: worker
+              image: busybox:1.35
+              command: ["<command>"]

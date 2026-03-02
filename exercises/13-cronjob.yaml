@@ -10,25 +10,9 @@ description: |
   A CronJob manages time-based Jobs, similar to cron in Linux. The schedule uses
   standard cron syntax: `minute hour day-of-month month day-of-week`.
 
-  ```yaml
-  apiVersion: batch/v1
-  kind: CronJob
-  metadata:
-    name: hello
-  spec:
-    schedule: "*/1 * * * *"
-    jobTemplate:
-      spec:
-        template:
-          spec:
-            restartPolicy: OnFailure
-            containers:
-            - name: hello
-              image: busybox:1.35
-              command:
-              - /bin/sh
-              - -c
-              - date; echo Hello from CronJob
+  A template has been placed at `/root/cronjob.yaml`. Fill in the schedule and command, then apply it:
+  ```
+  kubectl apply -f /root/cronjob.yaml
   ```
 
   **Verify:**
@@ -49,4 +33,25 @@ validation:
   - args: ["get", "cronjob", "hello", "-o", "jsonpath={.spec.jobTemplate.spec.template.spec.containers[0].image}"]
     expect: "busybox:1.35"
     description: "CronJob uses busybox:1.35"
-preconditions: []
+preconditions:
+  - type: file
+    path: /root/cronjob.yaml
+    content: |
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: hello
+      spec:
+        schedule: "<cron-schedule>"
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                restartPolicy: OnFailure
+                containers:
+                - name: hello
+                  image: busybox:1.35
+                  command:
+                  - /bin/sh
+                  - -c
+                  - <command>

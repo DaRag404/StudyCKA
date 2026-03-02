@@ -6,8 +6,9 @@ const sandbox  = require('../sandbox/docker');
 const sessions = require('../session/manager');
 const { loadExercises } = require('./exercises');
 
-// Cleanup command: removes all user-created resources from the default namespace
-// so each exercise starts from a clean slate.
+// Cleanup command: removes all user-created resources from the default namespace,
+// deletes any non-system namespaces, and removes template files from /root/.
+// Runs each exercise from a clean slate.
 const CLEANUP_CMD = [
   'sh', '-c',
   [
@@ -19,6 +20,10 @@ const CLEANUP_CMD = [
     'kubectl delete rolebindings,roles --all -n default --ignore-not-found=true',
     'kubectl delete serviceaccounts   --all -n default --ignore-not-found=true',
     'kubectl delete configmaps   --all -n default --ignore-not-found=true',
+    // Delete all non-system namespaces created by previous exercises
+    'kubectl get ns --no-headers -o custom-columns=\':metadata.name\' | grep -vE \'^(default|kube-system|kube-public|kube-node-lease)$\' | xargs -r kubectl delete ns --ignore-not-found=true --wait=false 2>/dev/null || true',
+    // Remove template files placed in home directory by preconditions
+    'rm -f /root/*.yaml',
     'true',
   ].join('; '),
 ];
@@ -54,6 +59,8 @@ router.post('/:exerciseId', async (req, res) => {
         } else if (pre.type === 'command') {
           const shellCmd = Array.isArray(pre.command) ? pre.command.join(' ') : pre.command;
           await sandbox.execCommand(session.containerId, ['sh', '-c', shellCmd]);
+        } else if (pre.type === 'file') {
+          await sandbox.writeFile(session.containerId, pre.path, pre.content);
         }
       }
     }

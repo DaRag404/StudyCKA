@@ -24,20 +24,9 @@ description: |
   kubectl delete pvc data-pvc
   ```
 
-  Then recreate with the correct StorageClass:
-  ```yaml
-  apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: data-pvc
-    namespace: default
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    storageClassName: local-path
-    resources:
-      requests:
-        storage: 500Mi
+  Then recreate using the template at `/root/pvc.yaml` — edit the `storageClassName` field and apply:
+  ```
+  kubectl apply -f /root/pvc.yaml
   ```
 
   **Verify:**
@@ -54,6 +43,21 @@ validation:
     expect: "local-path"
     description: "PVC references the existing local-path StorageClass"
 preconditions:
+  - type: file
+    path: /root/pvc.yaml
+    content: |
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data-pvc
+        namespace: default
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: <storage-class>
+        resources:
+          requests:
+            storage: 500Mi
   - type: manifest
     manifest: |
       apiVersion: v1

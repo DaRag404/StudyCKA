@@ -10,19 +10,9 @@ description: |
   Init containers run to completion before the main container starts. They are useful
   for setup tasks: waiting for dependencies, seeding data, or checking prerequisites.
 
-  ```yaml
-  apiVersion: v1
-  kind: Pod
-  metadata:
-    name: init-pod
-  spec:
-    initContainers:
-    - name: init
-      image: busybox:1.35
-      command: ["echo", "Initializing"]
-    containers:
-    - name: nginx
-      image: nginx:1.25
+  A template has been placed at `/root/pod.yaml`. Fill in the init container command and apply it:
+  ```
+  kubectl apply -f /root/pod.yaml
   ```
 
   **Verify:**
@@ -41,4 +31,19 @@ validation:
   - args: ["get", "pod", "init-pod", "-o", "jsonpath={.spec.initContainers[0].image}"]
     expect: "busybox:1.35"
     description: "Init container uses busybox:1.35"
-preconditions: []
+preconditions:
+  - type: file
+    path: /root/pod.yaml
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: init-pod
+      spec:
+        initContainers:
+        - name: init
+          image: busybox:1.35
+          command: ["<command>"]
+        containers:
+        - name: nginx
+          image: nginx:1.25

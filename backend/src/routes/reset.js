@@ -43,6 +43,8 @@ router.post('/:exerciseId', async (req, res) => {
           } else if (pre.type === 'command') {
             const shellCmd = Array.isArray(pre.command) ? pre.command.join(' ') : pre.command;
             await sandbox.execCommand(containerId, ['sh', '-c', shellCmd]);
+          } else if (pre.type === 'file') {
+            await sandbox.writeFile(containerId, pre.path, pre.content);
           }
         }
       }

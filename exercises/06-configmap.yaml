@@ -16,23 +16,11 @@ description: |
   ```
 
   **Step 2 — Create the Pod using the ConfigMap:**
-  ```yaml
-  apiVersion: v1
-  kind: Pod
-  metadata:
-    name: app
-  spec:
-    containers:
-    - name: app
-      image: nginx:1.25
-      env:
-      - name: APP_ENV
-        valueFrom:
-          configMapKeyRef:
-            name: app-config
-            key: APP_ENV
+
+  A template has been placed at `/root/pod.yaml`. Fill in the missing fields and apply it:
   ```
-  Save as `pod-app.yaml` and run `kubectl apply -f pod-app.yaml`
+  kubectl apply -f /root/pod.yaml
+  ```
 hints:
   - "Use `kubectl create configmap --from-literal=KEY=VALUE` for inline key-value pairs"
   - "Verify the ConfigMap: `kubectl get cm app-config -o yaml`"
@@ -44,4 +32,21 @@ validation:
   - args: ["get", "pod", "app", "-o", "jsonpath={.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}"]
     expect: "app-config"
     description: "Pod app references app-config ConfigMap"
-preconditions: []
+preconditions:
+  - type: file
+    path: /root/pod.yaml
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: app
+      spec:
+        containers:
+        - name: app
+          image: nginx:1.25
+          env:
+          - name: APP_ENV
+            valueFrom:
+              configMapKeyRef:
+                name: <configmap-name>
+                key: <key>

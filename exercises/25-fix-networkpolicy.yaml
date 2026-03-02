@@ -15,28 +15,11 @@ description: |
   ```
 
   **Fix:** Create a new NetworkPolicy that allows ingress on port **80** to pods
-  labelled `app: web`:
+  labelled `app: web`.
 
-  ```yaml
-  apiVersion: networking.k8s.io/v1
-  kind: NetworkPolicy
-  metadata:
-    name: allow-web-ingress
-    namespace: default
-  spec:
-    podSelector:
-      matchLabels:
-        app: web
-    policyTypes:
-    - Ingress
-    ingress:
-    - ports:
-      - port: 80
+  A template has been placed at `/root/networkpolicy.yaml`. Fill in the port and pod selector label, then apply it:
   ```
-
-  Apply it:
-  ```
-  kubectl apply -f allow-web-ingress.yaml
+  kubectl apply -f /root/networkpolicy.yaml
   ```
 
   **Verify:**
@@ -57,6 +40,23 @@ validation:
     expect: "web"
     description: "Policy targets pods labelled app=web"
 preconditions:
+  - type: file
+    path: /root/networkpolicy.yaml
+    content: |
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: allow-web-ingress
+        namespace: default
+      spec:
+        podSelector:
+          matchLabels:
+            app: <app-label>
+        policyTypes:
+        - Ingress
+        ingress:
+        - ports:
+          - port: <port>
   - type: manifest
     manifest: |
       apiVersion: apps/v1
