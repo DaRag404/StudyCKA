@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import useStore from '../store.js';
@@ -63,6 +63,8 @@ export default function ExerciseDetail() {
   const [resetting, setResetting] = useState(false);
   const [showHints, setShowHints] = useState(false);
 
+  const checkResultRef = useRef(null);
+
   // Load exercise detail when selection changes
   useEffect(() => {
     if (!selectedId) { setExercise(null); return; }
@@ -73,6 +75,13 @@ export default function ExerciseDetail() {
       .then(setExercise)
       .catch(console.error);
   }, [selectedId]);
+
+  // Scroll to check result banner when it appears
+  useEffect(() => {
+    if (checkResult) {
+      checkResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [checkResult]);
 
   const settingUp = setupStatus === 'running';
   const isReady   = sessionStatus === 'ready' && !settingUp;
@@ -199,7 +208,7 @@ export default function ExerciseDetail() {
 
         {/* Check result */}
         {checkResult && (
-          <div className={`mt-4 rounded-lg border p-3 ${
+          <div ref={checkResultRef} className={`mt-4 rounded-lg border p-3 ${
             checkResult.passed
               ? 'border-emerald-700 bg-emerald-950'
               : 'border-red-800 bg-red-950'
