@@ -20,9 +20,13 @@ const mdComponents = {
     </pre>
   ),
   code: ({ children, className }) => {
-    // If className is set (e.g. language-bash) it came from a fenced block → no extra styling
-    if (className) return <code className="text-green-300 font-mono">{children}</code>;
-    // Otherwise it's inline code
+    // Fenced code block: has a language className, or children contains a newline (no-language fences)
+    const isBlock = className || (typeof children === 'string' && children.includes('\n'));
+    if (isBlock) {
+      const content = typeof children === 'string' ? children.replace(/\n$/, '') : children;
+      return <code className={`text-green-300 font-mono${className ? ` ${className}` : ''}`}>{content}</code>;
+    }
+    // Inline code
     return <code className="bg-gray-800 text-blue-300 px-1 py-0.5 rounded text-xs font-mono">{children}</code>;
   },
   table: ({ children }) => (
@@ -36,6 +40,12 @@ const mdComponents = {
     <blockquote className="border-l-2 border-blue-500 pl-3 my-2 text-gray-400 italic">{children}</blockquote>
   ),
   hr: () => <hr className="border-gray-700 my-3" />,
+};
+
+// Hints are single-line — render <p> as inline <span> to avoid block margins
+const hintMdComponents = {
+  ...mdComponents,
+  p: ({ children }) => <span>{children}</span>,
 };
 
 export default function ExerciseDetail() {
@@ -175,7 +185,11 @@ export default function ExerciseDetail() {
                 {exercise.hints.map((h, i) => (
                   <li key={i} className="flex gap-2 text-gray-400 text-xs">
                     <span className="text-blue-500 flex-shrink-0">💡</span>
-                    <code className="text-gray-300">{h}</code>
+                    <span className="text-gray-300">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={hintMdComponents}>
+                        {h}
+                      </ReactMarkdown>
+                    </span>
                   </li>
                 ))}
               </ul>
