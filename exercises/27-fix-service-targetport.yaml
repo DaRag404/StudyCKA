@@ -16,8 +16,8 @@ description: |
 hints:
   - "Check the service port config: `kubectl get svc web-svc -o yaml` — look at `targetPort`"
   - "Check what port the container exposes: `kubectl get pod web -o jsonpath={.spec.containers[0].ports[0].containerPort}`"
-  - "nginx listens on port `80`, but `targetPort` is `8080` — fix with: `kubectl edit svc web-svc` and change `targetPort: 8080` to `targetPort: 80`"
-  - "Or: `kubectl edit svc web-svc` and change `targetPort: 8080` to `targetPort: 80`"
+  - "nginx listens on port `80`, but `targetPort` is `8080` — open `kubectl edit svc web-svc` and change `targetPort: 8080` to `targetPort: 80`"
+  - "Verify the fix: `kubectl get endpoints web-svc` — the endpoint IP should now appear"
 validation:
   - args: ["get", "svc", "web-svc", "-o", "jsonpath={.spec.ports[0].targetPort}"]
     expect: "80"
