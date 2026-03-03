@@ -1,5 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import useStore from '../store.js';
+
+const EXAM_SECONDS = 2 * 60 * 60; // 2 hours
+
+function useExamTimer() {
+  const [seconds, setSeconds] = useState(EXAM_SECONDS);
+  const [running, setRunning] = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (running && seconds > 0) {
+      intervalRef.current = setInterval(() => setSeconds((s) => s - 1), 1000);
+    } else {
+      clearInterval(intervalRef.current);
+      if (seconds === 0) setRunning(false);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [running, seconds]);
+
+  const toggle = () => setRunning((r) => !r);
+  const reset  = () => { setRunning(false); setSeconds(EXAM_SECONDS); };
+
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const display = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+  const color = seconds === 0      ? 'text-red-500 animate-pulse'
+              : seconds < 5 * 60   ? 'text-red-400'
+              : seconds < 10 * 60  ? 'text-yellow-400'
+              : running             ? 'text-gray-200'
+                                   : 'text-gray-500';
+
+  return { display, running, toggle, reset, color, done: seconds === 0 };
+}
 
 const RESOURCES = [
   { label: 'Kubernetes Docs',      url: 'https://kubernetes.io/docs/home/' },
@@ -23,6 +57,7 @@ const PROGRESS_ICONS = {
 
 export default function ExerciseList() {
   const [resourcesOpen, setResourcesOpen] = useState(false);
+  const timer = useExamTimer();
   const exercises         = useStore((s) => s.exercises);
   const selectedId        = useStore((s) => s.selectedExerciseId);
   const progress          = useStore((s) => s.exerciseProgress);
@@ -65,6 +100,32 @@ export default function ExerciseList() {
             className="h-full bg-emerald-500 rounded-full transition-all duration-500"
             style={{ width: exercises.length ? `${(passed / exercises.length) * 100}%` : '0%' }}
           />
+        </div>
+
+        {/* Exam timer */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="text-gray-600 text-xs">⏱</span>
+            <span className={`font-mono text-xs font-semibold tabular-nums ${timer.color}`}>
+              {timer.display}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={timer.toggle}
+              title={timer.running ? 'Pause' : 'Start'}
+              className="text-gray-500 hover:text-gray-300 text-xs transition-colors px-1"
+            >
+              {timer.running ? '⏸' : '▶'}
+            </button>
+            <button
+              onClick={timer.reset}
+              title="Reset timer"
+              className="text-gray-600 hover:text-gray-400 text-xs transition-colors px-1"
+            >
+              ↺
+            </button>
+          </div>
         </div>
 
         {/* Resources dropdown */}

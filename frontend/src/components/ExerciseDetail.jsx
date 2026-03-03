@@ -3,6 +3,33 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import useStore from '../store.js';
 
+function CopyPre({ children }) {
+  const [copied, setCopied] = useState(false);
+  const preRef = useRef(null);
+
+  const handleCopy = () => {
+    const text = preRef.current?.innerText ?? '';
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  };
+
+  return (
+    <div className="relative group mb-2">
+      <pre ref={preRef} className="bg-gray-800 border border-gray-700 rounded-md px-3 py-2 overflow-x-auto text-xs">
+        {children}
+      </pre>
+      <button
+        onClick={handleCopy}
+        className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 text-[10px] bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white px-1.5 py-0.5 rounded transition-all"
+      >
+        {copied ? '✓ copied' : 'copy'}
+      </button>
+    </div>
+  );
+}
+
 const mdComponents = {
   h1: ({ children }) => <h1 className="text-base font-bold text-white mt-3 mb-1">{children}</h1>,
   h2: ({ children }) => <h2 className="text-sm font-bold text-white mt-3 mb-1">{children}</h2>,
@@ -14,11 +41,7 @@ const mdComponents = {
   strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
   em: ({ children }) => <em className="italic text-gray-200">{children}</em>,
   // Inline code vs fenced code block — react-markdown wraps blocks in <pre><code>
-  pre: ({ children }) => (
-    <pre className="bg-gray-800 border border-gray-700 rounded-md px-3 py-2 mb-2 overflow-x-auto text-xs">
-      {children}
-    </pre>
-  ),
+  pre: ({ children }) => <CopyPre>{children}</CopyPre>,
   code: ({ children, className }) => {
     // Fenced code block: has a language className, or children contains a newline (no-language fences)
     const isBlock = className || (typeof children === 'string' && children.includes('\n'));
