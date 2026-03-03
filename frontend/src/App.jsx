@@ -74,6 +74,7 @@ export default function App() {
       .catch(console.error);
 
     initSession();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function initSession() {
@@ -126,6 +127,7 @@ export default function App() {
       stopPolling();
     }
     return stopPolling;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionStatus]);
 
   // When session becomes ready, apply preconditions for already-selected exercise
@@ -133,6 +135,7 @@ export default function App() {
     if (sessionStatus === 'ready') {
       triggerSetupIfNeeded();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionStatus]);
 
   return (

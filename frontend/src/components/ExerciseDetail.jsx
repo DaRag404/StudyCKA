@@ -74,7 +74,7 @@ export default function ExerciseDetail() {
       .then((r) => r.json())
       .then(setExercise)
       .catch(console.error);
-  }, [selectedId]);
+  }, [selectedId, clearCheckResult]);
 
   // Scroll to check result banner when it appears
   useEffect(() => {

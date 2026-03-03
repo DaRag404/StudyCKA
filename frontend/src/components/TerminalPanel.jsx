@@ -166,6 +166,7 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
 
     // Clean up listener when ws closes
     ws.addEventListener('close', () => disposeOnData.dispose(), { once: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
