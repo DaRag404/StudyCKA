@@ -39,7 +39,6 @@ const RESOURCES = [
   { label: 'Kubernetes Docs',      url: 'https://kubernetes.io/docs/home/' },
   { label: 'kubectl Cheat Sheet',  url: 'https://kubernetes.io/docs/reference/kubectl/cheatsheet/' },
   { label: 'CKA Exam Info',        url: 'https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/' },
-  { label: 'killer.sh Simulator',  url: 'https://killer.sh' },
   { label: 'CKA Curriculum',       url: 'https://github.com/cncf/curriculum' },
 ];
 

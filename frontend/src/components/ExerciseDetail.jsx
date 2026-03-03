@@ -85,18 +85,23 @@ export default function ExerciseDetail() {
   const [checking, setChecking]   = useState(false);
   const [resetting, setResetting] = useState(false);
   const [showHints, setShowHints] = useState(false);
+  const [visible, setVisible]     = useState(true);
 
   const checkResultRef = useRef(null);
 
-  // Load exercise detail when selection changes
+  // Load exercise detail when selection changes — fade out, swap, fade in
   useEffect(() => {
     if (!selectedId) { setExercise(null); return; }
+    setVisible(false);
     setShowHints(false);
     clearCheckResult();
-    fetch(`/api/exercises/${selectedId}`)
-      .then((r) => r.json())
-      .then(setExercise)
-      .catch(console.error);
+    const t = setTimeout(() => {
+      fetch(`/api/exercises/${selectedId}`)
+        .then((r) => r.json())
+        .then((ex) => { setExercise(ex); setVisible(true); })
+        .catch(console.error);
+    }, 150);
+    return () => clearTimeout(t);
   }, [selectedId, clearCheckResult]);
 
   // Scroll to check result banner when it appears
@@ -198,7 +203,7 @@ export default function ExerciseDetail() {
       )}
 
       {/* Description (scrollable) */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 text-sm text-gray-300 leading-relaxed">
+      <div className={`flex-1 overflow-y-auto px-5 py-4 text-sm text-gray-300 leading-relaxed transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}>
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
           {exercise.description}
         </ReactMarkdown>
