@@ -1,0 +1,47 @@
+id: "45"
+title: "Expose a Service with NodePort"
+difficulty: "easy"
+category: "Services & Networking"
+order: 45
+description: |
+  A Deployment named `web` is running. Expose it as a **NodePort** Service named
+  `web-nodeport` on port **80** with a fixed nodePort of **30080**.
+
+  ```
+  kubectl get svc web-nodeport
+  ```
+hints:
+  - "NodePort services expose the application on each node's IP at a static port"
+  - "Imperative start: `kubectl expose deployment web --name=web-nodeport --port=80 --type=NodePort`"
+  - "To set a specific nodePort, use a YAML manifest with `spec.ports[0].nodePort: 30080`"
+  - "Verify: `kubectl get svc web-nodeport` — the PORT(S) column should show `80:30080/TCP`"
+validation:
+  - args: ["get", "svc", "web-nodeport", "-o", "jsonpath={.spec.type}"]
+    expect: "NodePort"
+    description: "Service type is NodePort"
+  - args: ["get", "svc", "web-nodeport", "-o", "jsonpath={.spec.ports[0].nodePort}"]
+    expect: "30080"
+    description: "NodePort is set to 30080"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+        namespace: default
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25
+              ports:
+              - containerPort: 80

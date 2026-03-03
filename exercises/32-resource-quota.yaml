@@ -1,0 +1,35 @@
+id: "32"
+title: "Create a Namespace Resource Quota"
+difficulty: "medium"
+category: "Configuration"
+order: 32
+description: |
+  Create a namespace named `quota-ns` with a **ResourceQuota** named `compute-quota`
+  that enforces these limits:
+
+  | Field            | Value  |
+  |-----------------|--------|
+  | requests.cpu    | 1      |
+  | requests.memory | 512Mi  |
+  | limits.cpu      | 2      |
+  | limits.memory   | 1Gi    |
+
+  Then create a Pod named `quota-pod` using image `nginx:1.25` in `quota-ns`
+  that specifies resource requests and limits.
+
+  ```
+  kubectl describe resourcequota compute-quota -n quota-ns
+  ```
+hints:
+  - "Create the namespace first: `kubectl create namespace quota-ns`"
+  - "When a ResourceQuota exists in a namespace, all Pods **must** specify resource requests and limits"
+  - "Apply the ResourceQuota YAML with `kind: ResourceQuota` and `spec.hard` containing the limits"
+  - "Create the pod with resources: `kubectl run quota-pod --image=nginx:1.25 -n quota-ns --requests='cpu=100m,memory=64Mi' --limits='cpu=200m,memory=128Mi'`"
+validation:
+  - args: ["get", "resourcequota", "compute-quota", "-n", "quota-ns", "-o", "jsonpath={.metadata.name}"]
+    expect: "compute-quota"
+    description: "ResourceQuota compute-quota exists in namespace quota-ns"
+  - args: ["get", "pod", "quota-pod", "-n", "quota-ns", "-o", "jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod quota-pod is Running in quota-ns"
+preconditions: []

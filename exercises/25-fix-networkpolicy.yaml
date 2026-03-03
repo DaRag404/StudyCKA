@@ -1,5 +1,5 @@
 id: "25"
-title: "Fix: NetworkPolicy Blocking Traffic"
+title: "Fix NetworkPolicy Blocking Traffic"
 difficulty: "hard"
 category: "Troubleshooting"
 order: 25

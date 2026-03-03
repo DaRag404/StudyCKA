@@ -1,40 +1,23 @@
 id: "18"
-title: "Fix: Service Has No Endpoints"
+title: "Fix Service Has No Endpoints"
 difficulty: "medium"
 category: "Troubleshooting"
 order: 18
 description: |
-  A Service named `web-svc` exists in the `default` namespace but has **no endpoints** —
-  traffic is not reaching the pods.
+  A Service named `web-svc` exists but has **no endpoints** — traffic cannot
+  reach the pods.
 
-  **Investigate:**
+  Find the mismatch between the Service selector and the pod labels, then fix it.
+
   ```
   kubectl get endpoints web-svc
-  kubectl get svc web-svc -o yaml
   kubectl get pods --show-labels
   ```
-
-  Compare the Service's `selector` with the actual labels on the running pods.
-  Find the mismatch and fix the Service selector to match the pods.
-
-  **Fix:**
-  ```
-  kubectl patch svc web-svc -p '{"spec":{"selector":{"app":"<correct-value>"}}}'
-  ```
-  Or:
-  ```
-  kubectl edit svc web-svc
-  ```
-
-  **Verify:**
-  ```
-  kubectl get endpoints web-svc
-  # Should show at least one IP address
-  ```
 hints:
-  - "`kubectl get pods --show-labels` reveals what labels the pods actually have"
-  - "`kubectl get svc web-svc -o jsonpath={.spec.selector}` shows the current (broken) selector"
-  - "The selector key and value must exactly match a pod label — case-sensitive"
+  - "Check what the service selects: `kubectl get svc web-svc -o jsonpath={.spec.selector}`"
+  - "Check what labels the pods actually have: `kubectl get pods --show-labels`"
+  - "The selector key or value doesn't match the pod label — fix with: `kubectl edit svc web-svc` and change the selector `app` value to `nginx`"
+  - "Verify: `kubectl get endpoints web-svc` — should show at least one IP"
 validation:
   - args: ["get", "svc", "web-svc", "-o", "jsonpath={.spec.selector.app}"]
     expect: "nginx"

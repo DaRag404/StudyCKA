@@ -1,17 +1,26 @@
 id: "41"
-title: "Fix ImagePullBackOff"
+title: "Fix ImagePullBackOff (Bad Tag)"
 difficulty: "easy"
 category: "Troubleshooting"
 order: 41
 description: |
-  Pod cannot pull image.
+  A Pod named `pull-pod` cannot start because the image tag does not exist
+  in the registry.
 
-  Fix image.
+  Fix the image so the pod runs successfully.
 
+  ```
+  kubectl get pod pull-pod
+  kubectl describe pod pull-pod
+  ```
+hints:
+  - "Check Events: `kubectl describe pod pull-pod` — the tag `badtag` does not exist"
+  - "The correct image is `nginx:1.25`"
+  - "Export, fix, delete, re-apply: change `image: nginx:badtag` to `image: nginx:1.25`"
 validation:
-  - args: ["get","pod","pull-pod","-o","jsonpath={.status.phase}"]
+  - args: ["get", "pod", "pull-pod", "-o", "jsonpath={.status.phase}"]
     expect: "Running"
-    description: "Pod running"
+    description: "Pod pull-pod is Running"
 preconditions:
   - type: manifest
     manifest: |

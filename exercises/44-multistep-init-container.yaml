@@ -1,17 +1,28 @@
 id: "44"
-title: "Init Container Data Flow"
+title: "Fix Init Container Volume Name Mismatch"
 difficulty: "hard"
 category: "Workloads"
 order: 44
 description: |
-  Init container should create a file used by main container.
+  A Pod named `init-pod` has an init container that should write a file to a
+  shared volume, which the main nginx container then serves. The pod starts but
+  nginx serves the default page instead of the init container's content.
 
-  Fix volume sharing so nginx serves the file.
+  Find and fix the volume name mismatch.
 
+  ```
+  kubectl get pod init-pod
+  kubectl describe pod init-pod
+  ```
+hints:
+  - "Inspect the pod spec: `kubectl get pod init-pod -o yaml` — compare `volumeMounts.name` across containers"
+  - "The init container mounts volume named `wrong` but the actual volume is named `data`"
+  - "Both the init container and the main container must reference the same volume name"
+  - "Export, fix, delete, re-apply: change the init container `volumeMounts[0].name` from `wrong` to `data`"
 validation:
-  - args: ["get","pod","init-pod","-o","jsonpath={.spec.volumes[0].name}"]
+  - args: ["get", "pod", "init-pod", "-o", "jsonpath={.spec.volumes[0].name}"]
     expect: "data"
-    description: "Volume configured"
+    description: "Pod volume is correctly named data"
 preconditions:
   - type: manifest
     manifest: |
@@ -22,8 +33,8 @@ preconditions:
       spec:
         initContainers:
         - name: init
-          image: busybox
-          command: ["sh","-c","echo hello > /data/index.html"]
+          image: busybox:1.35
+          command: ["sh", "-c", "echo hello > /data/index.html"]
           volumeMounts:
           - name: wrong
             mountPath: /data

@@ -1,0 +1,25 @@
+id: "35"
+title: "Manually Schedule a Pod"
+difficulty: "medium"
+category: "Scheduling"
+order: 35
+description: |
+  Create a Pod named `manual-pod` using image `nginx:1.25` that is **manually
+  scheduled** onto the node `cka-lab` — without going through the scheduler.
+
+  ```
+  kubectl get nodes
+  kubectl get pod manual-pod -o wide
+  ```
+hints:
+  - "Add `nodeName: cka-lab` directly under `spec` in the pod manifest — the scheduler is bypassed"
+  - "Manually scheduled pods skip the scheduling queue and appear on the target node immediately"
+  - "Verify: `kubectl get pod manual-pod -o jsonpath={.spec.nodeName}` — should return `cka-lab`"
+validation:
+  - args: ["get", "pod", "manual-pod", "-o", "jsonpath={.spec.nodeName}"]
+    expect: "cka-lab"
+    description: "Pod is manually scheduled on cka-lab"
+  - args: ["get", "pod", "manual-pod", "-o", "jsonpath={.status.phase}"]
+    expect: "Running"
+    description: "Pod manual-pod is Running"
+preconditions: []

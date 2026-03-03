@@ -1,20 +1,27 @@
 id: "27"
-title: "Fix Service TargetPort"
-difficulty: "hard"
-category: "Networking"
+title: "Fix Service TargetPort Mismatch"
+difficulty: "medium"
+category: "Troubleshooting"
 order: 27
 description: |
-  The Service `web-svc` does not route traffic correctly.
+  A Service named `web-svc` has endpoints but traffic is not reaching the Pod.
+  The Service routes to the wrong container port.
 
-  Fix the configuration so traffic reaches the Pod.
+  Fix the `targetPort` so traffic reaches nginx.
 
+  ```
+  kubectl get svc web-svc
+  kubectl get endpoints web-svc
+  ```
 hints:
-  - "Check endpoints"
-  - "Compare containerPort vs targetPort"
+  - "Check the service port config: `kubectl get svc web-svc -o yaml` — look at `targetPort`"
+  - "Check what port the container exposes: `kubectl get pod web -o jsonpath={.spec.containers[0].ports[0].containerPort}`"
+  - "nginx listens on port `80`, but `targetPort` is `8080` — fix with: `kubectl edit svc web-svc` and change `targetPort: 8080` to `targetPort: 80`"
+  - "Or: `kubectl edit svc web-svc` and change `targetPort: 8080` to `targetPort: 80`"
 validation:
-  - args: ["get","svc","web-svc","-o","jsonpath={.spec.ports[0].targetPort}"]
+  - args: ["get", "svc", "web-svc", "-o", "jsonpath={.spec.ports[0].targetPort}"]
     expect: "80"
-    description: "Correct targetPort"
+    description: "Service targetPort is 80"
 preconditions:
   - type: manifest
     manifest: |

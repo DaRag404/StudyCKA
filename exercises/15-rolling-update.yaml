@@ -1,47 +1,22 @@
 id: "15"
-title: "Rolling Update Strategy"
-difficulty: "hard"
+title: "Rolling Update and Rollout"
+difficulty: "medium"
 category: "Workloads"
 order: 15
 description: |
-  A Deployment named `web` is running `nginx:1.24`. Perform a rolling update to `nginx:1.25`
-  and configure the rolling update strategy with:
-  - `maxSurge: 1`
-  - `maxUnavailable: 0`
+  A Deployment named `web` is running `nginx:1.24`. Update it to `nginx:1.25`
+  and configure the rolling update strategy: `maxSurge: 1`, `maxUnavailable: 0`.
 
-  A rolling update replaces old Pods with new ones gradually, ensuring zero downtime.
-  `maxSurge` controls how many extra Pods can be created above the desired count.
-  `maxUnavailable` controls how many Pods can be unavailable during the update.
-
-  **Step 1 — Update the image:**
   ```
-  kubectl set image deployment/web nginx=nginx:1.25
-  ```
-
-  **Step 2 — Configure the update strategy (patch or edit):**
-  ```
-  kubectl patch deployment web -p '{
-    "spec": {
-      "strategy": {
-        "type": "RollingUpdate",
-        "rollingUpdate": {
-          "maxSurge": 1,
-          "maxUnavailable": 0
-        }
-      }
-    }
-  }'
-  ```
-
-  **Monitor the rollout:**
-  ```
+  kubectl get deployment web
   kubectl rollout status deployment/web
   kubectl rollout history deployment/web
   ```
 hints:
-  - "`kubectl rollout undo deployment/web` rolls back to the previous version"
-  - "`maxUnavailable: 0` with `maxSurge: 1` means Kubernetes always adds one new Pod before removing an old one"
-  - "Use `kubectl set image` for quick image updates without editing YAML"
+  - "Update the image: `kubectl set image deployment/web nginx=nginx:1.25`"
+  - "Edit the strategy: `kubectl edit deployment web` — under `spec.strategy`, set `type: RollingUpdate` and add `rollingUpdate: {maxSurge: 1, maxUnavailable: 0}`"
+  - "Monitor: `kubectl rollout status deployment/web`"
+  - "To undo if needed: `kubectl rollout undo deployment/web`"
 validation:
   - args: ["get", "deploy", "web", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
     expect: "nginx:1.25"

@@ -1,0 +1,29 @@
+id: "26"
+title: "Create a DaemonSet"
+difficulty: "easy"
+category: "Workloads"
+order: 26
+description: |
+  Create a DaemonSet named `log-collector` using image `nginx:1.25`.
+
+  A DaemonSet ensures a copy of a Pod runs on **every** node in the cluster.
+  Unlike a Deployment, you do not set a replica count — it scales automatically
+  with the node count.
+
+  ```
+  kubectl get daemonset log-collector
+  kubectl get pods -o wide
+  ```
+hints:
+  - "DaemonSets cannot be created imperatively — write a YAML manifest with `kind: DaemonSet`"
+  - "A DaemonSet has no `replicas` field — the spec looks like a Deployment template without it"
+  - "The `spec.selector.matchLabels` must match `spec.template.metadata.labels`"
+  - "Verify a pod is running on every node: `kubectl get pods -o wide`"
+validation:
+  - args: ["get", "daemonset", "log-collector", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
+    expect: "nginx:1.25"
+    description: "DaemonSet uses image nginx:1.25"
+  - args: ["get", "daemonset", "log-collector", "-o", "jsonpath={.status.numberReady}"]
+    expect: "1"
+    description: "DaemonSet pod is running on the node"
+preconditions: []

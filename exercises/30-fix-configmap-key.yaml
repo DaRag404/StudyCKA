@@ -1,21 +1,27 @@
 id: "30"
-title: "Fix ConfigMap Key Reference"
-difficulty: "hard"
-category: "Configuration"
+title: "Fix Wrong ConfigMap Key Reference"
+difficulty: "medium"
+category: "Troubleshooting"
 order: 30
 description: |
-  The Pod `cm-pod` fails due to a wrong ConfigMap key.
+  A Pod named `cm-pod` is failing because it references a key that does not
+  exist in the ConfigMap. The pod cannot start.
 
-  Fix the reference.
+  Fix the key reference so the pod runs successfully.
 
-  A template has been placed at `/root/pod.yaml`.
-
+  ```
+  kubectl get pod cm-pod
+  kubectl describe pod cm-pod
+  ```
 hints:
-  - "Check ConfigMap data keys"
+  - "Check the error: `kubectl describe pod cm-pod` — look for 'couldn't find key' in Events"
+  - "Inspect the ConfigMap: `kubectl get configmap app-config -o yaml` — note the actual key names"
+  - "The pod references key `WRONG` but the ConfigMap has key `ENV`"
+  - "Fix using the template at `/root/pod.yaml` — change `key: WRONG` to `key: ENV`, then delete and re-apply"
 validation:
-  - args: ["get","pod","cm-pod","-o","jsonpath={.status.phase}"]
+  - args: ["get", "pod", "cm-pod", "-o", "jsonpath={.status.phase}"]
     expect: "Running"
-    description: "Pod is running"
+    description: "Pod cm-pod is Running"
 preconditions:
   - type: manifest
     manifest: |

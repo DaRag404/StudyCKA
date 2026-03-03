@@ -1,0 +1,48 @@
+id: "28"
+title: "Roll Back a Deployment"
+difficulty: "medium"
+category: "Workloads"
+order: 28
+description: |
+  A Deployment named `web` was recently updated to a broken image and pods are
+  failing to start. Roll it back to the previous working version.
+
+  ```
+  kubectl get deployment web
+  kubectl rollout history deployment/web
+  ```
+hints:
+  - "Check the rollout history: `kubectl rollout history deployment/web`"
+  - "Roll back to the previous revision: `kubectl rollout undo deployment/web`"
+  - "Monitor recovery: `kubectl rollout status deployment/web`"
+  - "Verify the image is restored: `kubectl get deploy web -o jsonpath={.spec.template.spec.containers[0].image}`"
+validation:
+  - args: ["get", "deployment", "web", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
+    expect: "nginx:1.25"
+    description: "Deployment has been rolled back to nginx:1.25"
+  - args: ["get", "deployment", "web", "-o", "jsonpath={.status.readyReplicas}"]
+    expect: "2"
+    description: "Deployment has 2 ready replicas"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+        namespace: default
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25
+  - type: command
+    command: "kubectl set image deployment/web nginx=nginx:broken"

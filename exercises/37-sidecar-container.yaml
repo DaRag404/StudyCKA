@@ -1,0 +1,30 @@
+id: "37"
+title: "Sidecar Container with Shared Volume"
+difficulty: "medium"
+category: "Workloads"
+order: 37
+description: |
+  Create a Pod named `sidecar-pod` with two containers sharing an `emptyDir` volume:
+
+  - **writer**: image `busybox:1.35`, command: `while true; do echo hello >> /data/log.txt; sleep 5; done`
+  - **reader**: image `nginx:1.25`, mounts the same volume at `/data`
+
+  Both containers must mount the shared volume at `/data`.
+
+  ```
+  kubectl get pod sidecar-pod
+  kubectl exec sidecar-pod -c reader -- cat /data/log.txt
+  ```
+hints:
+  - "Define the shared volume under `spec.volumes` as `emptyDir: {}`"
+  - "Each container references the volume by name in its `volumeMounts` — both use path `/data`"
+  - "The writer uses `command: ['/bin/sh', '-c', 'while true; do echo hello >> /data/log.txt; sleep 5; done']`"
+  - "After creation, verify data sharing: `kubectl exec sidecar-pod -c reader -- cat /data/log.txt`"
+validation:
+  - args: ["get", "pod", "sidecar-pod", "-o", "jsonpath={.spec.containers[0].name}"]
+    expect: "writer"
+    description: "Pod has a writer container"
+  - args: ["get", "pod", "sidecar-pod", "-o", "jsonpath={.spec.containers[1].volumeMounts[0].mountPath}"]
+    expect: "/data"
+    description: "Reader container mounts volume at /data"
+preconditions: []

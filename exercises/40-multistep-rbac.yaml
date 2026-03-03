@@ -1,21 +1,30 @@
 id: "40"
-title: "Multi-step RBAC Fix"
+title: "Fix RoleBinding Wrong Subject"
 difficulty: "hard"
 category: "Security"
 order: 40
 description: |
-  A ServiceAccount cannot access Pods.
+  A ServiceAccount `dev` should be able to list Pods via a Role and RoleBinding,
+  but access is denied. There are two problems:
+  - The Role only allows `watch` — it needs `get` and `list`
+  - The RoleBinding binds to `wrong` instead of `dev`
 
-  Fix:
-  - Role verbs
-  - RoleBinding reference
+  Fix both issues.
 
+  ```
+  kubectl auth can-i list pods --as=system:serviceaccount:default:dev
+  kubectl get role role -o yaml
+  kubectl get rolebinding rb -o yaml
+  ```
 hints:
-  - "Check subjects"
+  - "Check access: `kubectl auth can-i list pods --as=system:serviceaccount:default:dev`"
+  - "Fix the Role verbs: `kubectl edit role role` — add `get` and `list` to the verbs list"
+  - "Fix the RoleBinding subject: `kubectl edit rolebinding rb` — change `name: wrong` to `name: dev`"
+  - "Verify: `kubectl auth can-i list pods --as=system:serviceaccount:default:dev` — should print `yes`"
 validation:
-  - args: ["get","rolebinding","rb","-o","jsonpath={.subjects[0].name}"]
+  - args: ["get", "rolebinding", "rb", "-o", "jsonpath={.subjects[0].name}"]
     expect: "dev"
-    description: "Correct SA bound"
+    description: "RoleBinding is bound to the dev ServiceAccount"
 preconditions:
   - type: manifest
     manifest: |

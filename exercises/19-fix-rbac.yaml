@@ -1,38 +1,23 @@
 id: "19"
-title: "Fix: RBAC — Missing ClusterRoleBinding"
+title: "Fix RBAC — Missing ClusterRoleBinding"
 difficulty: "medium"
-category: "Troubleshooting"
+category: "Security"
 order: 19
 description: |
-  A ServiceAccount named `dev-sa` in the `default` namespace needs to **list and get Pods**
-  across the cluster. A `ClusterRole` named `pod-reader` already exists with the right rules,
-  but the ServiceAccount cannot use it yet.
+  A ServiceAccount named `dev-sa` needs to list Pods across the cluster.
+  A ClusterRole `pod-reader` with the correct rules exists, but `dev-sa`
+  is not bound to it.
 
-  **Investigate:**
+  Create the missing ClusterRoleBinding.
+
   ```
   kubectl auth can-i list pods --as=system:serviceaccount:default:dev-sa
-  # Should print: no
-
   kubectl get clusterrole pod-reader -o yaml
-  kubectl get clusterrolebinding | grep dev-sa
-  ```
-
-  **Fix:** Create a `ClusterRoleBinding` that binds `pod-reader` to `dev-sa`:
-  ```
-  kubectl create clusterrolebinding pod-reader-binding \
-    --clusterrole=pod-reader \
-    --serviceaccount=default:dev-sa
-  ```
-
-  **Verify:**
-  ```
-  kubectl auth can-i list pods --as=system:serviceaccount:default:dev-sa
-  # Should print: yes
   ```
 hints:
-  - "`kubectl auth can-i` with `--as` is the fastest way to check effective permissions"
-  - "A ClusterRoleBinding is cluster-scoped — it grants access across all namespaces"
-  - "The subject for a ServiceAccount is `system:serviceaccount:<namespace>:<name>`"
+  - "Confirm access is denied: `kubectl auth can-i list pods --as=system:serviceaccount:default:dev-sa`"
+  - "Create the binding: `kubectl create clusterrolebinding pod-reader-binding --clusterrole=pod-reader --serviceaccount=default:dev-sa`"
+  - "Verify: `kubectl auth can-i list pods --as=system:serviceaccount:default:dev-sa` — should print `yes`"
 validation:
   - args: ["get", "clusterrolebinding", "pod-reader-binding", "-o", "jsonpath={.roleRef.name}"]
     expect: "pod-reader"

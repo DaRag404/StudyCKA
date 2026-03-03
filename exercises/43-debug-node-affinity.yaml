@@ -1,17 +1,27 @@
 id: "43"
-title: "Fix Node Affinity"
+title: "Fix Pod Pending Due to Node Affinity"
 difficulty: "hard"
 category: "Scheduling"
 order: 43
 description: |
-  Pod is Pending due to bad affinity.
+  A Pod named `aff-pod` is stuck in **Pending** state. It has a `requiredDuringScheduling`
+  node affinity rule that cannot be satisfied by any node in the cluster.
 
-  Fix it.
+  Fix the affinity so the pod can schedule.
 
+  ```
+  kubectl get pod aff-pod
+  kubectl describe pod aff-pod
+  ```
+hints:
+  - "Check Events: `kubectl describe pod aff-pod` — look for 'node(s) didn't match Pod's node affinity'"
+  - "Inspect the affinity: `kubectl get pod aff-pod -o jsonpath={.spec.affinity}`"
+  - "The pod requires label `disktype=nonexistent` which no node has"
+  - "Fix options: (A) remove the affinity rule entirely, or (B) label the node: `kubectl label node cka-lab disktype=nonexistent`"
 validation:
-  - args: ["get","pod","aff-pod","-o","jsonpath={.status.phase}"]
+  - args: ["get", "pod", "aff-pod", "-o", "jsonpath={.status.phase}"]
     expect: "Running"
-    description: "Pod scheduled"
+    description: "Pod aff-pod is Running"
 preconditions:
   - type: manifest
     manifest: |

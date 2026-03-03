@@ -1,40 +1,23 @@
 id: "17"
-title: "Fix: ImagePullBackOff"
+title: "Fix ImagePullBackOff (Image Typo)"
 difficulty: "easy"
 category: "Troubleshooting"
 order: 17
 description: |
-  A Deployment named `web` is failing because the container image cannot be pulled.
+  A Deployment named `web` has pods stuck in **ImagePullBackOff**. The image
+  name contains a typo that prevents it from being pulled.
 
-  **Investigate:**
+  Find the bad image and fix it. The correct image is `nginx:1.25`.
+
   ```
   kubectl get pods -l app=web
   kubectl describe pod <pod-name>
   ```
-
-  Look at the **Events** section — you will see an image pull error.
-  The correct image should be `nginx:1.25`. Update the deployment to use the right tag.
-
-  **Fix:**
-  ```
-  kubectl set image deployment/web nginx=nginx:1.25
-  ```
-
-  Or edit directly:
-  ```
-  kubectl edit deployment web
-  # Change the image tag to 1.25
-  ```
-
-  **Verify:**
-  ```
-  kubectl rollout status deployment/web
-  kubectl get pods -l app=web
-  ```
 hints:
-  - "`kubectl describe pod <name>` — look at the Events section for the exact error"
-  - "The image tag `ngnix:1.25` contains a typo — `ngnix` instead of `nginx`"
-  - "`kubectl set image deployment/web <container-name>=nginx:1.25` is the fastest fix"
+  - "Check the Events section: `kubectl describe pod <pod-name>` — look for the pull error"
+  - "The image `ngnix:1.25` has a typo — `ngnix` should be `nginx`"
+  - "Fix: `kubectl set image deployment/web nginx=nginx:1.25`"
+  - "Verify: `kubectl rollout status deployment/web`"
 validation:
   - args: ["get", "deployment", "web", "-o", "jsonpath={.spec.template.spec.containers[0].image}"]
     expect: "nginx:1.25"

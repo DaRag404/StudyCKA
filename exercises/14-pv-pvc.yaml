@@ -1,33 +1,25 @@
 id: "14"
-title: "PersistentVolume and PersistentVolumeClaim"
-difficulty: "hard"
+title: "PersistentVolumeClaim and Pod Volume Mount"
+difficulty: "medium"
 category: "Storage"
 order: 14
 description: |
-  Create a PersistentVolumeClaim named `my-pvc` that requests **500Mi** of storage
-  with `ReadWriteOnce` access mode. k3s includes a local-path provisioner that will
-  automatically create a PersistentVolume to satisfy the claim.
+  Create a PersistentVolumeClaim named `my-pvc` requesting **500Mi** with
+  `ReadWriteOnce` access mode. Then create a Pod named `storage-pod` using
+  image `nginx:1.25` that mounts the PVC at `/usr/share/nginx/html`.
 
-  Then create a Pod named `storage-pod` using image `nginx:1.25` that mounts
-  the PVC at `/usr/share/nginx/html`.
+  Templates are at `/root/pvc.yaml` and `/root/pod.yaml`. Fill in the missing
+  fields and apply both.
 
-  **Step 1 — Create the PVC:**
-
-  A template has been placed at `/root/pvc.yaml`. Fill in the access mode and storage size, then apply it:
   ```
-  kubectl apply -f /root/pvc.yaml
-  ```
-
-  **Step 2 — Create a Pod that uses it:**
-
-  A template has been placed at `/root/pod.yaml`. Fill in the mount path and apply it:
-  ```
-  kubectl apply -f /root/pod.yaml
+  kubectl get pvc my-pvc
+  kubectl get pod storage-pod
   ```
 hints:
-  - "k3s's local-path provisioner auto-creates PVs — no need to create one manually"
-  - "PVC status goes `Pending` → `Bound` once a matching PV is created or found"
-  - "Check with `kubectl get pvc my-pvc` — wait for STATUS to be `Bound`"
+  - "k3s includes the `local-path` provisioner — it automatically creates a PV to satisfy the claim"
+  - "Apply the PVC first: `kubectl apply -f /root/pvc.yaml` — wait for STATUS `Bound`"
+  - "The pod needs a `volumes` entry referencing the PVC and a `volumeMounts` entry with the path"
+  - "Apply the pod: `kubectl apply -f /root/pod.yaml`"
 validation:
   - args: ["get", "pvc", "my-pvc", "-o", "jsonpath={.spec.accessModes[0]}"]
     expect: "ReadWriteOnce"

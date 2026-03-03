@@ -1,19 +1,27 @@
 id: "39"
-title: "Debug Readiness Probe"
+title: "Fix Pod Never Becomes Ready"
 difficulty: "medium"
-category: "Workloads"
+category: "Troubleshooting"
 order: 39
 description: |
-  Pod is running but never becomes Ready.
+  A Pod named `ready-pod` is **Running** but never transitions to **Ready**.
+  The readiness probe is misconfigured.
 
-  Fix readiness probe.
+  Fix the probe so traffic is served to this pod.
 
+  ```
+  kubectl get pod ready-pod
+  kubectl describe pod ready-pod
+  ```
 hints:
-  - "Check probe path"
+  - "A pod that is Running but not Ready is excluded from Service endpoints"
+  - "Check the probe: `kubectl describe pod ready-pod` — look for 'Readiness probe failed'"
+  - "The probe checks path `/wrong` — nginx only serves `/`"
+  - "Export, fix, delete, re-apply: change `path: /wrong` to `path: /`"
 validation:
-  - args: ["get","pod","ready-pod","-o","jsonpath={.status.containerStatuses[0].ready}"]
+  - args: ["get", "pod", "ready-pod", "-o", "jsonpath={.status.containerStatuses[0].ready}"]
     expect: "true"
-    description: "Pod is ready"
+    description: "Pod ready-pod is Ready"
 preconditions:
   - type: manifest
     manifest: |

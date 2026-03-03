@@ -1,19 +1,27 @@
 id: "33"
-title: "Fix PVC AccessMode"
-difficulty: "hard"
-category: "Storage"
+title: "Fix PVC Not Binding (Access Mode Mismatch)"
+difficulty: "medium"
+category: "Troubleshooting"
 order: 33
 description: |
-  The PVC is not binding.
+  A PersistentVolumeClaim named `data-claim` is stuck in **Pending** because
+  its access mode does not match the available PersistentVolume.
 
-  Fix the access mode.
+  Fix the access mode so the PVC binds successfully.
 
+  ```
+  kubectl get pvc data-claim
+  kubectl get pv pv-data
+  ```
 hints:
-  - "Compare PV and PVC"
+  - "Compare the access modes: `kubectl get pv pv-data -o jsonpath={.spec.accessModes}` vs `kubectl get pvc data-claim -o jsonpath={.spec.accessModes}`"
+  - "The PV supports `ReadWriteOnce` but the PVC requests `ReadOnlyMany` — they must match"
+  - "`accessModes` is immutable on a PVC — delete and recreate with `ReadWriteOnce`"
+  - "After fixing, `kubectl get pvc data-claim` should show STATUS `Bound`"
 validation:
-  - args: ["get","pvc","data-claim","-o","jsonpath={.status.phase}"]
+  - args: ["get", "pvc", "data-claim", "-o", "jsonpath={.status.phase}"]
     expect: "Bound"
-    description: "PVC is bound"
+    description: "PVC data-claim is Bound"
 preconditions:
   - type: manifest
     manifest: |

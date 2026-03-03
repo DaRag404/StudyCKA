@@ -4,6 +4,31 @@ All notable changes to StudyCKA are documented here.
 
 ---
 
+## [1.1.0] — 2026-03-03
+
+### Added
+- **Two-node cluster exercises (46–50)** — a second privileged container runs the k3s agent as a worker node, giving a real multi-node cluster for draining, tainting, node label scheduling, and agent troubleshooting
+- **New exercise precondition types**: `worker-node`, `command-on-worker`, `wait-for-worker-not-ready`
+- **5 new exercises**:
+  - 46: Fix NotReady Worker Node (hard)
+  - 47: Drain Worker Node for Maintenance (medium)
+  - 48: Fix Pending Pod with Node Label (easy)
+  - 49: Taint Worker Node and Schedule a Tolerating Pod (medium)
+  - 50: Fix Worker Node Agent Configuration (hard)
+- **6 exercises replaced** to cover previously missing CKA topics: DaemonSet (26), Rollback (28), Namespace Resource Quota (32), Manual Scheduling (35), Sidecar Container (37), NodePort Service (45)
+- **Worker node SSH access** — users SSH into the worker container with a password; SSH config pre-applied by preconditions
+
+### Changed
+- All exercises (1–45) rewritten: descriptions trimmed, solution commands moved to hints, difficulty recalibrated
+- Exercise titles: removed colons from "Fix:" prefix — now "Fix" throughout
+- `CLEANUP_CMD` extended to remove `env` taints, `disktype` labels, and uncordon `cka-lab` between exercises
+- `file` precondition type added to support template YAML files placed in the sandbox home directory
+
+### Fixed
+- YAML parsing errors in exercise hints containing JSON-like syntax with unescaped double quotes
+
+---
+
 ## [1.0.0] — 2026-03-01
 
 ### Added

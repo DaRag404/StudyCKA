@@ -4,25 +4,15 @@ difficulty: "easy"
 category: "Core Concepts"
 order: 1
 description: |
-  Create a Pod named `nginx` in the `default` namespace using the image `nginx:1.25`.
+  Create a Pod named `nginx` in the `default` namespace using image `nginx:1.25`.
 
-  A Pod is the smallest deployable unit in Kubernetes. It represents one or more
-  containers that share storage and network resources.
-
-  **Your task:**
-  Create a Pod with the following specification:
-  - Name: `nginx`
-  - Namespace: `default`
-  - Image: `nginx:1.25`
-
-  **Example:**
   ```
-  kubectl run nginx --image=nginx:1.25
+  kubectl get pod nginx
   ```
 hints:
-  - "Use `kubectl run <name> --image=<image>` for imperative pod creation"
-  - "Check pod status with `kubectl get pod nginx`"
-  - "Inspect the pod with `kubectl describe pod nginx`"
+  - "Use the imperative command: `kubectl run nginx --image=nginx:1.25`"
+  - "Check status: `kubectl get pod nginx` — wait for STATUS `Running`"
+  - "Inspect details: `kubectl describe pod nginx`"
 validation:
   - args: ["get", "pod", "nginx", "-o", "jsonpath={.spec.containers[0].image}"]
     expect: "nginx:1.25"

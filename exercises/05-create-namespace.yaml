@@ -4,29 +4,17 @@ difficulty: "easy"
 category: "Core Concepts"
 order: 5
 description: |
-  Create a Namespace named `staging`.
+  Create a Namespace named `staging`, then create a Pod named `nginx` using
+  image `nginx:1.25` inside it.
 
-  Namespaces provide a mechanism for isolating groups of resources within a single cluster.
-  They are useful for dividing cluster resources between multiple users or teams.
-
-  **Create the namespace:**
-  ```
-  kubectl create namespace staging
-  ```
-
-  **Then create a Pod inside it:**
-  ```
-  kubectl run nginx --image=nginx:1.25 -n staging
-  ```
-
-  **Verify:**
   ```
   kubectl get ns staging
   kubectl get pods -n staging
   ```
 hints:
-  - "`kubectl create ns staging` is shorthand for `kubectl create namespace staging`"
-  - "Use `-n <namespace>` or `--namespace=<namespace>` to target a specific namespace"
+  - "Create the namespace: `kubectl create namespace staging`"
+  - "Deploy the pod into it: `kubectl run nginx --image=nginx:1.25 -n staging`"
+  - "Use `-n <namespace>` to target resources in a specific namespace"
 validation:
   - args: ["get", "ns", "staging", "-o", "jsonpath={.metadata.name}"]
     expect: "staging"

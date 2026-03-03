@@ -1,21 +1,28 @@
 id: "38"
-title: "PV + PVC + Pod Binding Chain"
+title: "Fix PV + PVC + Pod Binding Chain"
 difficulty: "hard"
-category: "Storage"
+category: "Troubleshooting"
 order: 38
 description: |
-  Storage chain is broken:
-  - PV and PVC do not bind
-  - Pod cannot mount volume
+  A storage chain is broken:
+  - A PersistentVolume `pv` and PersistentVolumeClaim `claim` are not binding
+  - A Pod `pvc-pod` cannot start because the PVC is not bound
 
-  Fix everything so Pod is Running with mounted storage.
+  Fix the access mode mismatch so the PVC binds and the Pod starts.
 
+  ```
+  kubectl get pv,pvc
+  kubectl get pod pvc-pod
+  ```
 hints:
-  - "Match accessModes and storage"
+  - "Compare the PV and PVC: `kubectl get pv pv -o jsonpath={.spec.accessModes}` and `kubectl get pvc claim -o jsonpath={.spec.accessModes}`"
+  - "The PV supports `ReadWriteOnce` but the PVC requests `ReadOnlyMany` — they must match to bind"
+  - "`accessModes` is immutable — delete the PVC and recreate it with `ReadWriteOnce`"
+  - "Once the PVC is Bound, the pod will start automatically: `kubectl get pod pvc-pod`"
 validation:
-  - args: ["get","pvc","claim","-o","jsonpath={.status.phase}"]
+  - args: ["get", "pvc", "claim", "-o", "jsonpath={.status.phase}"]
     expect: "Bound"
-    description: "PVC bound"
+    description: "PVC claim is Bound to the PV"
 preconditions:
   - type: manifest
     manifest: |

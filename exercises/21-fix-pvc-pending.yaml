@@ -1,43 +1,23 @@
 id: "21"
-title: "Fix: PVC Stuck in Pending"
+title: "Fix PVC Stuck in Pending (Wrong StorageClass)"
 difficulty: "medium"
 category: "Troubleshooting"
 order: 21
 description: |
   A PersistentVolumeClaim named `data-pvc` is stuck in **Pending** state.
-  A Pod named `data-pod` is waiting for it and cannot start.
+  The pod `data-pod` waiting for it cannot start.
 
-  **Investigate:**
+  Find why the PVC is not binding and fix it.
+
   ```
   kubectl get pvc data-pvc
   kubectl describe pvc data-pvc
-  kubectl get storageclass
-  ```
-
-  The PVC is requesting a StorageClass that **does not exist** in this cluster.
-  k3s ships with a built-in StorageClass called `local-path`.
-
-  **Fix:** Patch the PVC to use the correct StorageClass.
-
-  Since you cannot edit `storageClassName` on an existing PVC, delete and recreate it:
-  ```
-  kubectl delete pvc data-pvc
-  ```
-
-  Then recreate using the template at `/root/pvc.yaml` — edit the `storageClassName` field and apply:
-  ```
-  kubectl apply -f /root/pvc.yaml
-  ```
-
-  **Verify:**
-  ```
-  kubectl get pvc data-pvc
-  # STATUS → Bound (may take a few seconds)
   ```
 hints:
-  - "`kubectl get storageclass` lists available storage classes in the cluster"
-  - "k3s's built-in provisioner is `local-path` — this is what you should use"
-  - "`storageClassName` is immutable on a PVC — you must delete and recreate it"
+  - "Check the PVC description: look for 'no persistent volumes available for this claim'"
+  - "List available storage classes: `kubectl get storageclass`"
+  - "The PVC requests `fast-nvme-storage` which doesn't exist — k3s provides `local-path`"
+  - "`storageClassName` is immutable — delete the PVC and recreate using the template at `/root/pvc.yaml`"
 validation:
   - args: ["get", "pvc", "data-pvc", "-o", "jsonpath={.spec.storageClassName}"]
     expect: "local-path"

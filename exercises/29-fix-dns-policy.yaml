@@ -1,19 +1,28 @@
 id: "29"
-title: "Fix DNS Policy"
-difficulty: "hard"
-category: "Networking"
+title: "Fix Pod Cannot Resolve Cluster DNS"
+difficulty: "medium"
+category: "Troubleshooting"
 order: 29
 description: |
-  The Pod `dns-pod` cannot resolve DNS.
+  A Pod named `dns-pod` cannot resolve Kubernetes service names. The DNS policy
+  is misconfigured, causing the pod to use the host's resolver instead of the
+  cluster DNS.
 
-  Fix the configuration.
+  Fix the DNS policy so the pod uses cluster-internal DNS.
 
+  ```
+  kubectl get pod dns-pod -o jsonpath='{.spec.dnsPolicy}'
+  kubectl exec dns-pod -- nslookup kubernetes
+  ```
 hints:
-  - "Check dnsPolicy"
+  - "Check the current DNS policy: `kubectl get pod dns-pod -o jsonpath={.spec.dnsPolicy}`"
+  - "Policy `Default` uses the node's DNS — it cannot resolve cluster service names"
+  - "The correct policy for cluster DNS is `ClusterFirst`"
+  - "Export, edit, delete, re-apply: change `dnsPolicy: Default` to `dnsPolicy: ClusterFirst`"
 validation:
-  - args: ["get","pod","dns-pod","-o","jsonpath={.spec.dnsPolicy}"]
+  - args: ["get", "pod", "dns-pod", "-o", "jsonpath={.spec.dnsPolicy}"]
     expect: "ClusterFirst"
-    description: "Correct DNS policy"
+    description: "Pod uses ClusterFirst DNS policy"
 preconditions:
   - type: manifest
     manifest: |
@@ -25,5 +34,5 @@ preconditions:
         dnsPolicy: Default
         containers:
         - name: app
-          image: busybox
-          command: ["sleep","3600"]
+          image: busybox:1.35
+          command: ["sleep", "3600"]

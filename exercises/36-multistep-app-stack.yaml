@@ -1,28 +1,29 @@
 id: "36"
-title: "Multi-step App Stack (Deployment + Service + ConfigMap)"
+title: "Fix Multi-step App Stack"
 difficulty: "hard"
-category: "Workloads"
+category: "Troubleshooting"
 order: 36
 description: |
-  A Deployment `app` should read configuration from a ConfigMap and be exposed via a Service.
+  A broken application stack is deployed with three problems:
+  - The Deployment pods are crashing due to a wrong ConfigMap key reference
+  - The Deployment selector label doesn't match the pod template labels
+  - The Service selector doesn't match the pod labels
 
-  Issues:
-  - ConfigMap key is wrong
-  - Deployment does not reference it correctly
-  - Service selector is incorrect
+  Fix all three issues so pods are Running and the Service has endpoints.
 
-  Fix all resources so:
-  - Pods are Running
-  - Env var APP_ENV=production is set
-  - Service routes traffic to Pods
-
+  ```
+  kubectl get pods
+  kubectl get endpoints app-svc
+  ```
 hints:
-  - "Check envFrom / configMapKeyRef"
-  - "Verify labels and selectors"
+  - "Start with the pods: `kubectl describe pod <name>` — look for ConfigMap key errors in Events"
+  - "The ConfigMap has key `ENV` but the pod references key `WRONG` — fix the env reference"
+  - "The Deployment `selector.matchLabels` and pod `template.labels` must match — both should use `app: app`"
+  - "Fix the Service: `kubectl edit svc app-svc` — change the selector `app` value from `wrong` to `app`"
 validation:
-  - args: ["get","svc","app-svc","-o","jsonpath={.spec.selector.app}"]
+  - args: ["get", "svc", "app-svc", "-o", "jsonpath={.spec.selector.app}"]
     expect: "app"
-    description: "Service selector fixed"
+    description: "Service selector matches pod labels"
 preconditions:
   - type: manifest
     manifest: |
