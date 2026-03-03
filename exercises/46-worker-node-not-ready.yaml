@@ -1,0 +1,37 @@
+id: "46"
+title: "Fix NotReady Worker Node"
+difficulty: "hard"
+category: "Cluster Management"
+order: 46
+description: |
+  The cluster has two nodes, but the worker node is **NotReady**.
+
+  ```
+  kubectl get nodes
+  ```
+
+  SSH into the worker node and fix the problem so it rejoins the cluster.
+
+  ```
+  ssh root@worker
+  ```
+
+  SSH password: `cka-worker`
+hints:
+  - "Check which node is NotReady: `kubectl get nodes`"
+  - "SSH into the worker: `ssh root@worker` (password: cka-worker). Check running processes: `ps aux | grep k3s`"
+  - "The k3s agent is not running. Restart it in the background: `k3s agent --snapshotter=native > /var/log/k3s-agent.log 2>&1 &`"
+  - "After restarting the agent, exit the worker (`exit`) and wait ~15 seconds, then verify from the server: `kubectl get nodes`"
+validation:
+  - args: ["get", "node", "worker", "-o", "jsonpath={.status.conditions[?(@.type==\"Ready\")].status}"]
+    expect: "True"
+    match: "contains"
+    description: "Worker node is Ready"
+preconditions:
+  - type: worker-node
+  - type: command
+    command: |
+      mkdir -p /root/.ssh && printf 'Host worker\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n  User root\n' > /root/.ssh/config
+  - type: command-on-worker
+    command: "pkill k3s || true"
+  - type: wait-for-worker-not-ready

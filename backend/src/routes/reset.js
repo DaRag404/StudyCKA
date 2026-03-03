@@ -35,6 +35,7 @@ router.post('/:exerciseId', async (req, res) => {
       await sandbox.waitForSystemPodsReady(containerId);
 
       // Apply exercise preconditions if any
+      let workerContainerId = null;
       const exercise = loadExercises().find((e) => e.id === exerciseId);
       if (exercise?.preconditions?.length) {
         for (const pre of exercise.preconditions) {
@@ -45,11 +46,22 @@ router.post('/:exerciseId', async (req, res) => {
             await sandbox.execCommand(containerId, ['sh', '-c', shellCmd]);
           } else if (pre.type === 'file') {
             await sandbox.writeFile(containerId, pre.path, pre.content);
+          } else if (pre.type === 'worker-node') {
+            workerContainerId = await sandbox.createWorkerNode(userId, containerId);
+            sessions.set(userId, { workerContainerId });
+            await sandbox.waitForWorkerReady(containerId);
+          } else if (pre.type === 'command-on-worker') {
+            if (workerContainerId) {
+              const shellCmd = Array.isArray(pre.command) ? pre.command.join(' ') : pre.command;
+              await sandbox.execCommand(workerContainerId, ['sh', '-c', shellCmd]);
+            }
+          } else if (pre.type === 'wait-for-worker-not-ready') {
+            await sandbox.waitForWorkerNotReady(containerId);
           }
         }
       }
 
-      sessions.set(userId, { status: 'ready', containerId });
+      sessions.set(userId, { status: 'ready', containerId, workerContainerId });
     } catch (err) {
       console.error(`[reset] failed for ${userId}:`, err.message);
       sessions.set(userId, { status: 'error', error: err.message });

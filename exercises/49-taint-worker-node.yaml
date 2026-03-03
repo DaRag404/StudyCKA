@@ -1,0 +1,42 @@
+id: "49"
+title: "Taint Worker Node and Schedule a Tolerating Pod"
+difficulty: "medium"
+category: "Scheduling"
+order: 49
+description: |
+  Taints allow a node to repel pods that do not explicitly tolerate the taint.
+  This is commonly used to reserve nodes for specific workloads.
+
+  **Your tasks:**
+  1. Apply a `NoSchedule` taint to the worker node: key `env`, value `prod`
+  2. Create a pod named `prod-pod` using image `nginx:1.25` that:
+     - Has a toleration matching the taint
+     - Uses `nodeSelector` to target the worker node
+  3. Verify the pod is **Running** on the worker node
+
+  ```
+  kubectl get nodes
+  kubectl describe node worker
+  ```
+hints:
+  - "Taint the worker node: `kubectl taint node worker env=prod:NoSchedule`"
+  - "Verify the taint was applied: `kubectl describe node worker | grep -A3 Taints`"
+  - "Add this to the pod spec — `tolerations: [{key: env, operator: Equal, value: prod, effect: NoSchedule}]`"
+  - "Force the pod onto the worker with `nodeSelector: {kubernetes.io/hostname: worker}` and apply: `kubectl apply -f prod-pod.yaml`"
+validation:
+  - args: ["get", "pod", "prod-pod", "-o", "jsonpath={.status.phase}"]
+    expect: "Running"
+    match: "contains"
+    description: "Pod prod-pod is Running"
+  - args: ["get", "pod", "prod-pod", "-o", "jsonpath={.spec.nodeName}"]
+    expect: "worker"
+    match: "contains"
+    description: "Pod prod-pod is scheduled on the worker node"
+  - args: ["get", "node", "worker", "-o", "jsonpath={.spec.taints[0].key}"]
+    expect: "env"
+    match: "contains"
+    description: "Worker node has the env taint applied"
+preconditions:
+  - type: worker-node
+  - type: command
+    command: "kubectl taint node worker env- 2>/dev/null || true"

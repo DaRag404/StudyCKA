@@ -1,0 +1,55 @@
+id: "47"
+title: "Drain Worker Node for Maintenance"
+difficulty: "medium"
+category: "Cluster Management"
+order: 47
+description: |
+  A Deployment `web-app` with 3 replicas is running across the cluster.
+  You need to prepare the **worker** node for scheduled maintenance without
+  losing any workloads.
+
+  **Your tasks:**
+  1. Cordon the worker node so no new pods are scheduled on it
+  2. Drain the worker node, safely evicting all pods
+  3. Confirm all pods are running on the remaining node
+  4. Uncordon the worker node to return it to service
+
+  ```
+  kubectl get nodes
+  kubectl get pods -o wide
+  ```
+hints:
+  - "Mark the node unschedulable: `kubectl cordon worker`"
+  - "Evict all pods from the node: `kubectl drain worker --ignore-daemonsets --delete-emptydir-data`"
+  - "Verify pods moved to the other node: `kubectl get pods -o wide` — all should show `cka-lab`"
+  - "Return the worker to service: `kubectl uncordon worker`"
+validation:
+  - args: ["get", "node", "worker", "-o", "jsonpath={.spec.unschedulable}"]
+    expect: ""
+    match: "exact"
+    description: "Worker node is schedulable (uncordoned)"
+  - args: ["get", "deployment", "web-app", "-o", "jsonpath={.status.readyReplicas}"]
+    expect: "3"
+    match: "exact"
+    description: "Deployment web-app has 3 ready replicas"
+preconditions:
+  - type: worker-node
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web-app
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: web-app
+        template:
+          metadata:
+            labels:
+              app: web-app
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25

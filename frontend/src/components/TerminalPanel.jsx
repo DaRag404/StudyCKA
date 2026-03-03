@@ -8,6 +8,7 @@ import useStore from '../store.js';
 export default function TerminalPanel({ onCollapse, onRestore, onExpand, terminalMode }) {
   const userId        = useStore((s) => s.userId);
   const sessionStatus = useStore((s) => s.sessionStatus);
+  const setupStatus   = useStore((s) => s.setupStatus);
 
   const containerRef = useRef(null);
   const termRef      = useRef(null);
@@ -168,7 +169,8 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
   }, [userId]);
 
   useEffect(() => {
-    if (sessionStatus === 'ready') {
+    // Only connect when both session and exercise setup are ready
+    if (sessionStatus === 'ready' && setupStatus !== 'running') {
       connectWs();
     }
     if (sessionStatus === 'resetting' || sessionStatus === 'starting' || sessionStatus === 'waiting') {
@@ -192,7 +194,24 @@ export default function TerminalPanel({ onCollapse, onRestore, onExpand, termina
         termRef.current.writeln('\r\n\x1b[31m[Cluster error — try resetting the environment]\x1b[0m\r\n');
       }
     }
-  }, [sessionStatus, connectWs]);
+  }, [sessionStatus, setupStatus, connectWs]);
+
+  // Lock the terminal while exercise preconditions are being applied
+  useEffect(() => {
+    if (setupStatus === 'running') {
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (termRef.current) {
+        termRef.current.clear();
+        termRef.current.writeln('\r\n\x1b[33mPreparing exercise environment…\x1b[0m\r\n');
+      }
+    } else if (setupStatus === 'done' && sessionStatus === 'ready') {
+      connectWs();
+    }
+  }, [setupStatus, sessionStatus, connectWs]);
 
   return (
     <div className="flex flex-col h-full bg-gray-950">

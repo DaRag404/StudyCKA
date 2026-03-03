@@ -15,7 +15,9 @@ RUN apk add --no-cache \
     iptables \
     ip6tables \
     socat \
-    conntrack-tools
+    conntrack-tools \
+    openssl \
+    openssh-client
 
 # Download the k3s binary (it bundles kubectl, containerd, runc, etc.)
 ARG K3S_VERSION=v1.28.5+k3s1

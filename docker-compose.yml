@@ -8,6 +8,13 @@ services:
     image: studycka-sandbox:latest
     entrypoint: ["true"]
 
+  # ── Build the worker-node image for two-node exercises ───────────────────────
+  worker-build:
+    build:
+      context: ./sandbox-worker
+    image: studycka-worker:latest
+    entrypoint: ["true"]
+
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
     build:
@@ -16,6 +23,8 @@ services:
     restart: unless-stopped
     depends_on:
       sandbox-build:
+        condition: service_completed_successfully
+      worker-build:
         condition: service_completed_successfully
     environment:
       - PORT=3000

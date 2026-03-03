@@ -1,0 +1,46 @@
+id: "48"
+title: "Fix Pending Pod with Node Label"
+difficulty: "easy"
+category: "Scheduling"
+order: 48
+description: |
+  A pod named `ssd-app` is stuck in **Pending** state because it requires a
+  node with a specific label that does not exist in the cluster yet.
+
+  Investigate why the pod is not scheduling and fix the problem by labelling
+  the correct node.
+
+  ```
+  kubectl get pods
+  kubectl describe pod ssd-app
+  ```
+hints:
+  - "Inspect the pod to find the required label: `kubectl describe pod ssd-app` — look at the **Node-Selectors** and **Events** sections"
+  - "The pod requires `disktype=ssd`. Check existing node labels: `kubectl get nodes --show-labels`"
+  - "Label the worker node: `kubectl label node worker disktype=ssd`"
+  - "The scheduler retries automatically — verify the pod scheduled: `kubectl get pod ssd-app -o wide`"
+validation:
+  - args: ["get", "pod", "ssd-app", "-o", "jsonpath={.status.phase}"]
+    expect: "Running"
+    match: "contains"
+    description: "Pod ssd-app is Running"
+  - args: ["get", "node", "worker", "-o", "jsonpath={.metadata.labels.disktype}"]
+    expect: "ssd"
+    match: "contains"
+    description: "Worker node has label disktype=ssd"
+preconditions:
+  - type: worker-node
+  - type: command
+    command: "kubectl label node worker disktype- 2>/dev/null || true"
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: ssd-app
+      spec:
+        nodeSelector:
+          disktype: ssd
+        containers:
+        - name: nginx
+          image: nginx:1.25

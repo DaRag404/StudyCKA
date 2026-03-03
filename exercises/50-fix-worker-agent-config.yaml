@@ -1,0 +1,41 @@
+id: "50"
+title: "Fix Worker Node Agent Configuration"
+difficulty: "hard"
+category: "Troubleshooting"
+order: 50
+description: |
+  The cluster has two nodes, but the worker node is **NotReady**.
+  Simply restarting the agent will not help — there is a **configuration error**
+  preventing the agent from connecting to the server.
+
+  SSH into the worker node, investigate the logs, fix the configuration,
+  and restart the agent.
+
+  ```
+  kubectl get nodes
+  ssh root@worker
+  ```
+
+  SSH password: `cka-worker`
+
+  After restarting the agent, wait ~30 seconds before checking your answer.
+hints:
+  - "SSH in and try restarting the agent: `k3s agent --snapshotter=native > /var/log/k3s-agent.log 2>&1 &` — then check the log: `tail /var/log/k3s-agent.log`"
+  - "The log shows the agent cannot reach the server. Inspect the k3s environment config: `cat /etc/profile.d/k3s.sh`"
+  - "The K3S_URL contains the wrong port. Fix it: `sed -i 's/9999/6443/' /etc/profile.d/k3s.sh`"
+  - "Reload the config and restart the agent: `. /etc/profile.d/k3s.sh && k3s agent --snapshotter=native > /var/log/k3s-agent.log 2>&1 &` — then `exit` and wait ~30s"
+validation:
+  - args: ["get", "node", "worker", "-o", "jsonpath={.status.conditions[?(@.type==\"Ready\")].status}"]
+    expect: "True"
+    match: "contains"
+    description: "Worker node is Ready"
+preconditions:
+  - type: worker-node
+  - type: command
+    command: |
+      mkdir -p /root/.ssh && printf 'Host worker\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n  User root\n' > /root/.ssh/config
+  - type: command-on-worker
+    command: "sed -i 's/:6443/:9999/' /etc/profile.d/k3s.sh"
+  - type: command-on-worker
+    command: "pkill k3s || true"
+  - type: wait-for-worker-not-ready

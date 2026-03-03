@@ -8,6 +8,8 @@ description: |
 
   Fix the reference.
 
+  A template has been placed at `/root/pod.yaml`.
+
 hints:
   - "Check ConfigMap data keys"
 validation:
@@ -24,6 +26,23 @@ preconditions:
       data:
         ENV: production
       ---
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: cm-pod
+      spec:
+        containers:
+        - name: app
+          image: nginx:1.25
+          env:
+          - name: ENV
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: WRONG
+  - type: file
+    path: /root/pod.yaml
+    content: |
       apiVersion: v1
       kind: Pod
       metadata:

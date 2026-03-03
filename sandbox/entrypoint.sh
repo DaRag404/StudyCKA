@@ -83,8 +83,12 @@ PROFILE
 echo 'export KUBECONFIG=/etc/rancher/k3s/k3s.yaml' >> /etc/profile
 
 # Start k3s server as PID 1
+# Reduced node-monitor-grace-period (15s vs 40s default) and node-monitor-period (3s vs 5s)
+# so worker node NotReady state is detected quickly in lab exercises.
 exec /usr/local/bin/k3s server \
   --disable=traefik \
   --disable=metrics-server \
   --write-kubeconfig-mode=644 \
-  --snapshotter=native
+  --snapshotter=native \
+  --kube-controller-manager-arg=node-monitor-grace-period=15s \
+  --kube-controller-manager-arg=node-monitor-period=3s
