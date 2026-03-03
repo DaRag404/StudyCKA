@@ -1,5 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useStore from '../store.js';
+
+const RESOURCES = [
+  { label: 'Kubernetes Docs',      url: 'https://kubernetes.io/docs/home/' },
+  { label: 'kubectl Cheat Sheet',  url: 'https://kubernetes.io/docs/reference/kubectl/cheatsheet/' },
+  { label: 'CKA Exam Info',        url: 'https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/' },
+  { label: 'killer.sh Simulator',  url: 'https://killer.sh' },
+  { label: 'CKA Curriculum',       url: 'https://github.com/cncf/curriculum' },
+];
 
 const DIFFICULTY_COLORS = {
   easy:   'bg-emerald-900 text-emerald-300',
@@ -14,6 +22,7 @@ const PROGRESS_ICONS = {
 };
 
 export default function ExerciseList() {
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const exercises         = useStore((s) => s.exercises);
   const selectedId        = useStore((s) => s.selectedExerciseId);
   const progress          = useStore((s) => s.exerciseProgress);
@@ -56,6 +65,37 @@ export default function ExerciseList() {
             className="h-full bg-emerald-500 rounded-full transition-all duration-500"
             style={{ width: exercises.length ? `${(passed / exercises.length) * 100}%` : '0%' }}
           />
+        </div>
+
+        {/* Resources dropdown */}
+        <div className="mt-2">
+          <button
+            onClick={() => setResourcesOpen((o) => !o)}
+            className="w-full flex items-center justify-between text-xs text-gray-500 hover:text-gray-300 transition-colors py-0.5"
+          >
+            <span className="flex items-center gap-1.5">
+              <span>📚</span>
+              <span>Resources</span>
+            </span>
+            <span className={`transition-transform duration-200 text-base ${resourcesOpen ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          {resourcesOpen && (
+            <ul className="mt-1 space-y-0.5">
+              {RESOURCES.map(({ label, url }) => (
+                <li key={url}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-400 transition-colors py-0.5 pl-1"
+                  >
+                    <span className="text-gray-600">↗</span>
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
