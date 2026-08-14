@@ -1,0 +1,34 @@
+id: "57"
+title: "Create a Static Pod"
+difficulty: hard
+category: Administration
+order: 57
+description: |
+  Skapa en static pod som kör nginx. Static pods hanteras av kubelet direkt
+  och inte av API-servern. De måste placeras i kubelet's pod manifest directory.
+
+  **Steg:**
+  1. Skapa eller använd befintlig catalog för static pods.
+  2. Skapa en manifest-fil med en nginx-pod.
+  3. Verifiera att static poden körs.
+
+hints:
+  - "Static pods placeras i katalogen /etc/kubernetes/manifests (standard på k3s)"
+  - "Använd `mkdir -p /etc/kubernetes/manifests` för att säkerställa att katalogen finns"
+  - "En static pod manifest behöver apiVersion, kind, metadata och spec"
+  - "Static pods visas under `kube-system` namespace med prefixet pod- som podnamn"
+  - "Kontrollera status med `kubectl get pods -n kube-system`"
+preconditions: []
+validation:
+  - args: ["get", "pods", "-n", "kube-system", "--no-headers"]
+    expect: "static-nginx"
+    match: "includes"
+    description: "Static pod static-nginx ska finnas i kube-system namespace"
+  - args: ["get", "pods", "-n", "kube-system", "-o", "jsonpath={.items[?(@.metadata.name=='static-nginx')].spec.containers[0].image}"]
+    expect: "nginx"
+    match: "exact"
+    description: "Static pod ska köra nginx-avbildning"
+  - args: ["get", "pods", "-n", "kube-system", "-o", "jsonpath={.items[?(@.metadata.name=='static-nginx')].status.phase}"]
+    expect: "Running"
+    match: "exact"
+    description: "Static pod ska ha status Running"

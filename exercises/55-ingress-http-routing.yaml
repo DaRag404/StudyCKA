@@ -1,0 +1,56 @@
+---
+id: "55"
+title: "Create an Ingress with Host-Based Routing"
+difficulty: "hard"
+category: "Services & Networking"
+order: 55
+description: |
+  The development team needs a Kubernetes Ingress to route HTTP traffic
+  to different backend Services based on hostnames.
+
+  **Your tasks:**
+  1. Create a Deployment `web-frontend` with 2 replicas (nginx:1.25) exposing port 80.
+  2. Create a Service `web-frontend-svc` exposing port 80 for the frontend pods.
+  3. Create a Deployment `web-api` with 2 replicas (nginx:1.25) exposing port 80.
+  4. Create a Service `web-api-svc` exposing port 80 for the API pods.
+  5. Create an Ingress resource `app-ingress` that routes traffic:
+     - Requests to `example.com` → `web-frontend-svc` (port 80)
+     - Requests to `api.example.com` → `web-api-svc` (port 80)
+
+  ```
+  kubectl get ingress
+  kubectl describe ingress app-ingress
+  ```
+hints:
+  - "You need three resources: 2 Deployments, 2 Services, and 1 Ingress."
+  - "Use `host` field in Ingress rules to match hostnames."
+  - "Ingress resource needs `spec.rules[*].host` and `spec.rules[*].http.paths[*].backend`."
+  - "In Kubernetes 1.19+, use `service.port.number` under `backend.service` instead of `serviceName`/`servicePort`."
+  - "Verify with: `kubectl get ingress app-ingress -o yaml`"
+  - "Note: Ingress requires an Ingress Controller. In k3s, it's included by default."
+validation:
+  - args: ["get", "deployment", "web-frontend", "-o", "jsonpath={.spec.replicas}"]
+    expect: "2"
+    description: "Deployment web-frontend has 2 replicas"
+  - args: ["get", "deployment", "web-api", "-o", "jsonpath={.spec.replicas}"]
+    expect: "2"
+    description: "Deployment web-api has 2 replicas"
+  - args: ["get", "svc", "web-frontend-svc", "-o", "jsonpath={.spec.ports[0].port}"]
+    expect: "80"
+    description: "Service web-frontend-svc exposes port 80"
+  - args: ["get", "svc", "web-api-svc", "-o", "jsonpath={.spec.ports[0].port}"]
+    expect: "80"
+    description: "Service web-api-svc exposes port 80"
+  - args: ["get", "ingress", "app-ingress", "-o", "jsonpath={.spec.rules[0].host}"]
+    expect: "example.com"
+    description: "First Ingress rule routes example.com"
+  - args: ["get", "ingress", "app-ingress", "-o", "jsonpath={.spec.rules[1].host}"]
+    expect: "api.example.com"
+    description: "Second Ingress rule routes api.example.com"
+  - args: ["get", "ingress", "app-ingress", "-o", "jsonpath={.spec.rules[0].http.paths[0].backend.service.name}"]
+    expect: "web-frontend-svc"
+    description: "example.com routes to web-frontend-svc"
+  - args: ["get", "ingress", "app-ingress", "-o", "jsonpath={.spec.rules[1].http.paths[0].backend.service.name}"]
+    expect: "web-api-svc"
+    description: "api.example.com routes to web-api-svc"
+preconditions: []

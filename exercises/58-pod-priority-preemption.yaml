@@ -1,0 +1,41 @@
+id: "58"
+title: "Pod Priority and Preemption"
+difficulty: hard
+category: Scheduling
+order: 58
+description: |
+  Konfigurera Pod Priority och Preemption så att viktiga pods kan prioriteras
+  och preempts lägre prioriterade pods när resurser är begränsade.
+
+  **Steg:**
+  1. Skapa ett PriorityClass `high-priority` med priority 1000000.
+  2. Skapa ett PriorityClass `low-priority` med priority 100.
+  3. Skapa en deployment med 5 pods (nginx) med low-priority.
+  4. Skapa en deployment med 1 pod (nginx) med high-priority.
+  5. Verifiera att high-priority pod schedulas och low-priority pods påverkas.
+
+hints:
+  - "Använd `kubectl create priorityclass` för att skapa priority classes"
+  - "High-priority ska ha priority-värde 1000000 eller högre för systemviktigt"
+  - "Low-priority kan ha ett lågt värde som 100"
+  - "Sätt `priorityClassName` i pod spec för varje deployment"
+  - "Kontrollera prioritet med `kubectl get pod <pod-name> -o yaml | grep priorityClassName`"
+  - "Använd `kubectl get pods -o wide` för att se status"
+preconditions: []
+validation:
+  - args: ["get", "priorityclass", "high-priority", "-o", "jsonpath={.value}"]
+    expect: "1000000"
+    match: "exact"
+    description: "PriorityClass high-priority ska ha value 1000000"
+  - args: ["get", "priorityclass", "low-priority", "-o", "jsonpath={.value}"]
+    expect: "100"
+    match: "exact"
+    description: "PriorityClass low-priority ska ha value 100"
+  - args: ["get", "pods", "-o", "jsonpath={.items[*].spec.priorityClassName}"]
+    expect: "high-priority"
+    match: "includes"
+    description: "Det ska finnas pods med high-priority klass"
+  - args: ["get", "pods", "-o", "jsonpath={.items[*].spec.priorityClassName}"]
+    expect: "low-priority"
+    match: "includes"
+    description: "Det ska finnas pods med low-priority klass"
