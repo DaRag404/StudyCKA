@@ -1,0 +1,39 @@
+id: "51"
+title: "Configure Horizontal Pod Autoscaler"
+difficulty: "medium"
+category: "Workloads"
+order: 51
+description: |
+  Create a Deployment named `hpa-demo` with 1 replica using image `nginx:1.25`
+  that exposes port 80.
+
+  Then create a Horizontal Pod Autoscaler named `hpa-hpa-demo` that targets the
+  `hpa-demo` Deployment and scales between 2 and 10 replicas based on CPU usage
+  at 50%.
+
+  **Note:** You must set resource requests on the Deployment containers before
+  the HPA can calculate CPU utilization.
+
+  ```
+  kubectl get deployment hpa-demo
+  kubectl get hpa hpa-hpa-demo
+  kubectl get pods
+  ```
+hints:
+  - "Create the Deployment first with resource requests: kubectl create deployment hpa-demo --image=nginx:1.25 --port=80 --requests=cpu=100m,memory=128Mi"
+  - "The HPA needs the Deployment to have resource requests to calculate CPU percentage"
+  - "Create the HPA: kubectl autoscale deployment hpa-demo --min=2 --max=10 --cpu-percent=50"
+  - "Verify: kubectl get hpa hpa-hpa-demo — should show Target CPU: 50%"
+validation:
+  - args: ["get", "hpa", "hpa-hpa-demo", "-o", "jsonpath={.spec.minReplicas}"]
+    expect: "2"
+    description: "HPA minimum replicas is 2"
+  - args: ["get", "hpa", "hpa-hpa-demo", "-o", "jsonpath={.spec.maxReplicas}"]
+    expect: "10"
+    description: "HPA maximum replicas is 10"
+  - args: ["get", "hpa", "hpa-hpa-demo", "-o", "jsonpath={.spec.metrics[0].type}"]
+    expect: "Resource"
+    description: "HPA uses resource metrics (CPU)"
+  - args: ["get", "deployment", "hpa-demo", "-o", "jsonpath={.spec.template.spec.containers[0].resources.requests.cpu}"]
+    expect: "100m"
+    description: "Deployment has CPU request set"

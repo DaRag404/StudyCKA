@@ -1,0 +1,43 @@
+---
+id: "52"
+title: "Create a PodDisruptionBudget"
+difficulty: "medium"
+category: "Administration"
+order: 52
+description: |
+  Ensure high availability for your web application by creating a
+  PodDisruptionBudget (PDB). PDBs protect pods from voluntary disruptions
+  such as node drains or cluster autoscaling.
+  
+  **Your tasks:**
+  1. Create a Deployment named `web-app` with 5 replicas using image `nginx:1.25`.
+  2. Create a PodDisruptionBudget named `web-app-pdb` that ensures at least
+     2 pods remain available during voluntary disruptions.
+  3. Verify the PDB is correctly configured and all pods are healthy.
+  
+  ```
+  kubectl get deployment web-app
+  kubectl get pdb web-app-pdb
+  kubectl get pods -l app=web-app
+  ```
+hints:
+  - "Create the deployment first: `kubectl create deployment web-app --image=nginx:1.25 --replicas=5`"
+  - "A PDB can be defined with `minAvailable` or `maxUnavailable` — pick one."
+  - "Create the PDB imperatively: `kubectl create pdb web-app-pdb --selector=app=web-app --min-available=2`"
+  - "Verify: `kubectl get pdb web-app-pdb -o yaml`"
+  - "Check the PDB status to confirm all pods are covered: `kubectl get pdb web-app-pdb`"
+validation:
+  - args: ["get", "pdb", "web-app-pdb", "-o", "jsonpath={.spec.minAvailable}"]
+    expect: "2"
+    description: "PDB has minAvailable set to 2"
+  - args: ["get", "pdb", "web-app-pdb", "-o", "jsonpath={.spec.selector.matchLabels.app}"]
+    expect: "web-app"
+    description: "PDB selector targets the web-app deployment"
+  - args: ["get", "deployment", "web-app", "-o", "jsonpath={.spec.replicas}"]
+    expect: "5"
+    description: "Deployment has 5 replicas"
+  - args: ["get", "pdb", "web-app-pdb", "-o", "jsonpath={.status.currentHealthy}"]
+    expect: "5"
+    match: "gte"
+    description: "All pods are healthy and covered by the PDB"
+preconditions: []
