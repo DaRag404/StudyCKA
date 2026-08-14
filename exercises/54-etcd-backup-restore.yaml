@@ -1,0 +1,61 @@
+---
+id: "54"
+title: "Backup and Restore etcd Cluster Data"
+difficulty: "hard"
+category: "Administration"
+order: 54
+description: |
+  etcd is the backing store for all Kubernetes cluster state. Regular backups
+  are essential for disaster recovery.
+
+  Your cluster is running on a single node. The etcd instance is managed
+  statically (manifest in `/etc/kubernetes/manifests/etcd.yaml`) and the
+  endpoints are accessible at `https://127.0.0.1:2379`.
+
+  **Your tasks:**
+  1. Create a backup of the etcd cluster data.
+  2. Verify the backup file exists and is not empty.
+  3. Restore the cluster from the backup and confirm data is available.
+
+  **Backup steps:**
+  ```
+  ETCDCTL_API=3 etcdctl snapshot save /tmp/etcd-backup.db \
+    --endpoints=https://127.0.0.1:2379 \
+    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+    --cert=/etc/kubernetes/pki/etcd/server.crt \
+    --key=/etc/kubernetes/pki/etcd/server.key
+  ```
+
+  **Verify the backup:**
+  ```
+  ETCDCTL_API=3 etcdctl snapshot status /tmp/etcd-backup.db --write-out=table
+  ```
+
+  **Restore steps:**
+  ```
+  ETCDCTL_API=3 etcdctl snapshot restore /tmp/etcd-backup.db \
+    --data-dir=/var/lib/etcd-from-backup
+  ```
+
+  **Verify the restore:**
+  ```
+  ls -la /var/lib/etcd-from-backup
+  ```
+
+hints:
+  - "Make sure `ETCDCTL_API=3` is set — etcdctl version 2 is incompatible"
+  - "The etcd endpoints and TLS certificates are located in `/etc/kubernetes/pki/etcd/`"
+  - "Check the backup status before restoring: `etcdctl snapshot status`"
+  - "The restore creates a new data directory — do not overwrite the existing one"
+  - "After a restore in a static pod setup, you may need to update the etcd manifest or restart the kubelet"
+validation:
+  - args: ["bash", "-c", "test -s /tmp/etcd-backup.db && echo yes || echo no"]
+    expect: "yes"
+    description: "Backup file exists and is not empty"
+  - args: ["bash", "-c", "test -d /var/lib/etcd-from-backup && echo yes || echo no"]
+    expect: "yes"
+    description: "Restored data directory exists"
+  - args: ["bash", "-c", "test -d /var/lib/etcd-from-backup/member && echo yes || echo no"]
+    expect: "yes"
+    description: "Restored data directory contains member data"
+preconditions: []

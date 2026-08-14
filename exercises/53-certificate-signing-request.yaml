@@ -1,0 +1,64 @@
+---
+id: "53"
+title: "Create and Approve a CertificateSigningRequest"
+difficulty: "hard"
+category: "Security"
+order: 53
+description: |
+  A developer needs a TLS certificate for a service named `api-server`.
+  The organization uses Kubernetes CSR (CertificateSigningRequest) for PKI.
+  
+  **Your tasks:**
+  1. Create a private key and certificate signing request (CSR) for `api-server`
+     in the `default` namespace.
+  2. Submit the CSR and approve it using the cluster's signing CA.
+  3. Retrieve the signed certificate and save it locally.
+  
+  **Step 1 — Create key and CSR:**
+  ```
+  openssl genrsa -out api-server.key 2048
+  openssl req -new -key api-server.key -out api-server.csr -subj "/CN=api-server"
+  ```
+  
+  **Step 2 — Create the CSR resource:**
+  ```
+  kubectl create csr api-server-csr --cert=api-server.csr --group=system:authenticated
+  ```
+  
+  **Step 3 — Approve the CSR:**
+  ```
+  kubectl certificate approve api-server-csr
+  ```
+  
+  **Step 4 — Retrieve the signed certificate:**
+  ```
+  kubectl get csr api-server-csr -o jsonpath='{.status.certificate}' | base64 -d > api-server.crt
+  ```
+  
+  **Verify:**
+  ```
+  kubectl get csr api-server-csr
+  openssl x509 -in api-server.crt -text -noout | grep -A1 "Subject:"
+  ```
+
+hints:
+  - "The CSR must be base64-encoded when submitting: `--cert=$(base64 -w 0 api-server.csr)`"
+  - "Use `system:authenticated` group to allow any authenticated user to create CSRs, or `system:certificates.kube-apiserver:clients` for API-server clients"
+  - "After approval, the signed certificate appears in `.status.certificate` field"
+  - "The certificate data is base64-encoded, so you need to decode it: `base64 -d`"
+validation:
+  - args: ["get", "csr", "api-server-csr", "-o", "jsonpath={.status.conditions[0].type}"]
+    expect: "Approved"
+    description: "CSR api-server-csr has been approved"
+  - args: ["get", "csr", "api-server-csr", "-o", "jsonpath={.status.conditions[0].reason}"]
+    expect: "kube-apiserver signing"
+    description: "CSR was signed by the kube-apiserver CA"
+  - args: ["get", "csr", "api-server-csr", "-o", "jsonpath={.spec.request}"]
+    expect: ""
+    match: "nonempty"
+    description: "CSR has the signing request payload"
+  - args: ["get", "csr", "api-server-csr", "-o", "jsonpath={.status.certificate}"]
+    expect: ""
+    match: "nonempty"
+    description: "Signed certificate is available"
+preconditions: []
