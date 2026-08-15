@@ -1,0 +1,138 @@
+---
+id: "59"
+title: "Enforce Pod Security Standards and Create a Compliant Deployment"
+difficulty: "hard"
+category: "Security"
+order: 59
+description: |
+  Configure Pod Security Admission (PSA) on the `secure-ns` namespace with
+  the **`restricted`** profile and create a compliant Deployment.
+
+  Requirements:
+  1. Configure PSA on `secure-ns`: enforce=restricted, audit=baseline, warn=baseline
+  2. Create a Deployment `secure-app` with 2 replicas that complies with the
+     restricted profile (runs as non-root, drops all capabilities, read-only root filesystem)
+  3. Each pod must specify a securityContext with runAsNonRoot, readOnlyRootFilesystem,
+     and capabilities drop ALL
+
+  The restricted profile blocks: privileged containers, volume types like hostPath,
+  hostNetwork, hostPorts, and running as root.
+
+  ```
+  kubectl create namespace secure-ns --dry-run=client -o yaml | kubectl apply -f -
+  kubectl label ns secure-ns pod-security.kubernetes.io/enforce=restricted
+  kubectl label ns secure-ns pod-security.kubernetes.io/audit=baseline
+  kubectl label ns secure-ns pod-security.kubernetes.io/warn=baseline
+  ```
+
+hints:
+  - "PSA is applied via namespace labels on the namespace, not a separate resource"
+  - "Set enforce level: `kubectl label ns secure-ns pod-security.kubernetes.io/enforce=restricted`"
+  - "Use --overwrite flag if labels already exist on the namespace"
+  - "A restricted pod must specify: runAsNonRoot, readOnlyRootFilesystem, capabilities drop ALL"
+  - "Set runAsUser to a non-zero value (e.g., 1000) to ensure non-root execution"
+  - "Each container in the pod must have its own securityContext"
+  - "Verify: `kubectl get pods -n secure-ns` and `kubectl describe pod <name> -n secure-ns`"
+  - "Check the pod's security context: `kubectl get pod <name> -n secure-ns -o jsonpath='{.spec.containers[0].securityContext}'`"
+validation:
+  - args: ["get", "namespace", "secure-ns", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/enforce}"]
+    expect: "restricted"
+    match: "exact"
+    description: "Enforce level is set to restricted"
+  - args: ["get", "namespace", "secure-ns", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/audit}"]
+    expect: "baseline"
+    match: "exact"
+    description: "Audit level is set to baseline"
+  - args: ["get", "namespace", "secure-ns", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/warn}"]
+    expect: "baseline"
+    match: "exact"
+    description: "Warn level is set to baseline"
+  - args: ["get", "deployments", "-n", "secure-ns", "secure-app", "-o", "jsonpath={.spec.replicas}"]
+    expect: "2"
+    match: "exact"
+    description: "Deployment has 2 replicas"
+  - args: ["get", "pods", "-n", "secure-ns", "-l", "app=secure-app", "-o", "jsonpath={.items[0].spec.containers[0].securityContext.runAsNonRoot}"]
+    expect: "true"
+    match: "exact"
+    description: "Pods run as non-root"
+  - args: ["get", "pods", "-n", "secure-ns", "-l", "app=secure-app", "-o", "jsonpath={.items[0].spec.containers[0].securityContext.readOnlyRootFilesystem}"]
+    expect: "true"
+    match: "exact"
+    description: "Pods have read-only root filesystem"
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: secure-ns
+---
+id: "60"
+title: "Configure Cluster-Level Pod Security Standards"
+difficulty: "hard"
+category: "Security"
+order: 60
+description: |
+  Configure cluster-wide Pod Security Admission defaults and per-namespace overrides.
+
+  Requirements:
+  1. Set the cluster-level default to `restricted` (enforce, audit, warn)
+  2. Create a namespace `strict-ns` with enforce=restricted, audit=restricted, warn=restricted
+  3. Create a namespace `baseline-ns` with enforce=baseline (override the cluster default)
+  4. In `strict-ns`, create a Deployment `strict-app` with 1 replica that is restricted-compliant
+  5. Verify that all PSA labels are correctly applied at both cluster and namespace level
+
+  The cluster-level PSA defaults are set on the `default` Namespace object.
+
+  ```
+  kubectl label ns default pod-security.kubernetes.io/enforce=restricted
+  kubectl create namespace strict-ns
+  kubectl label ns strict-ns pod-security.kubernetes.io/enforce=restricted
+  kubectl create namespace baseline-ns
+  kubectl label ns baseline-ns pod-security.kubernetes.io/enforce=baseline
+  ```
+
+hints:
+  - "Cluster-level PSA defaults are set on the `default` namespace object"
+  - "Set cluster defaults: `kubectl label ns default pod-security.kubernetes.io/enforce=restricted`"
+  - "Namespace overrides inherit from cluster defaults unless explicitly set"
+  - "A restricted pod must specify: runAsNonRoot, readOnlyRootFilesystem, capabilities drop ALL"
+  - "Set runAsUser to a non-zero value (e.g., 1000) to ensure non-root execution"
+  - "Each container in the pod must have its own securityContext"
+  - "Verify cluster defaults: `kubectl get ns default -o jsonpath='{.metadata.labels}'`"
+  - "Verify namespace overrides: `kubectl get ns strict-ns -o jsonpath='{.metadata.labels}'`"
+  - "The cluster default applies to all namespaces without their own PSA labels"
+validation:
+  - args: ["get", "namespace", "default", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/enforce}"]
+    expect: "restricted"
+    match: "exact"
+    description: "Cluster-level enforce is set to restricted"
+  - args: ["get", "namespace", "default", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/audit}"]
+    expect: "restricted"
+    match: "exact"
+    description: "Cluster-level audit is set to restricted"
+  - args: ["get", "namespace", "default", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/warn}"]
+    expect: "restricted"
+    match: "exact"
+    description: "Cluster-level warn is set to restricted"
+  - args: ["get", "namespace", "strict-ns", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/enforce}"]
+    expect: "restricted"
+    match: "exact"
+    description: "strict-ns enforce is set to restricted"
+  - args: ["get", "namespace", "baseline-ns", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/enforce}"]
+    expect: "baseline"
+    match: "exact"
+    description: "baseline-ns enforce is set to baseline (overrides cluster default)"
+  - args: ["get", "deployments", "-n", "strict-ns", "strict-app", "-o", "jsonpath={.spec.replicas}"]
+    expect: "1"
+    match: "exact"
+    description: "strict-app deployment has 1 replica"
+  - args: ["get", "pods", "-n", "strict-ns", "-l", "app=strict-app", "-o", "jsonpath={.items[0].spec.containers[0].securityContext.runAsNonRoot}"]
+    expect: "true"
+    match: "exact"
+    description: "Pods in strict-ns run as non-root"
+  - args: ["get", "namespace", "baseline-ns", "-o", "jsonpath={.metadata.labels.pod-security\.kubernetes\.io/enforce}"]
+    expect: "baseline"
+    match: "exact"
+    description: "baseline-ns overrides cluster default with baseline"
+preconditions: []
