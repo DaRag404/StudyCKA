@@ -29,9 +29,22 @@ router.post('/:exerciseId', async (req, res) => {
   for (const v of exercise.validation) {
     try {
       const actual = await sandbox.kubectlExec(session.containerId, v.args);
-      const passed = v.match === 'contains'
-        ? actual.includes(v.expect)
-        : actual === v.expect;
+      const matchType = v.match || 'exact';
+      let passed = false;
+
+      if (matchType === 'exact') {
+        passed = actual === v.expect;
+      } else if (matchType === 'contains' || matchType === 'includes') {
+        passed = actual.includes(v.expect);
+      } else if (matchType === 'nonempty') {
+        passed = actual.trim().length > 0;
+      } else if (matchType === 'gte') {
+        const val = Number(actual);
+        passed = !Number.isNaN(val) && val >= Number(v.expect);
+      } else {
+        // Unknown match type, fall back to exact match
+        passed = actual === v.expect;
+      }
 
       if (!passed) allPassed = false;
       results.push({ passed, actual, expected: v.expect, description: v.description });
