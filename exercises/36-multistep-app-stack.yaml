@@ -24,6 +24,15 @@ validation:
   - args: ["get", "svc", "app-svc", "-o", "jsonpath={.spec.selector.app}"]
     expect: "app"
     description: "Service selector matches pod labels"
+  - args: ["get", "deployment", "app", "-o", "jsonpath={.spec.selector.matchLabels.app}"]
+    expect: "app"
+    description: "Deployment selector targets app"
+  - args: ["get", "deployment", "app", "-o", "jsonpath={.spec.template.metadata.labels.app}"]
+    expect: "app"
+    description: "Pod template labels match selector"
+  - args: ["get", "deployment", "app", "-o", "jsonpath={.status.readyReplicas}"]
+    expect: "2"
+    description: "Both pods are ready"
 preconditions:
   - type: manifest
     manifest: |

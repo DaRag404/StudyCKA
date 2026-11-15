@@ -1,0 +1,56 @@
+id: '55'
+title: Build a Kustomize Overlay
+category: Application Management
+difficulty: medium
+order: 55
+description: >-
+  Create ~/overlay/kustomization.yaml referencing ../base. Set namePrefix to prod- and add the
+  common label stage=prod. Preview and apply the overlay.
+hints:
+  - Use `kubectl kustomize overlay` to preview.
+  - Use `kubectl apply -k overlay` to deploy.
+preconditions:
+  - type: file
+    path: /root/base/kustomization.yaml
+    content: |
+      resources: [deployment.yaml]
+  - type: file
+    path: /root/base/deployment.yaml
+    content: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+      spec:
+        replicas: 1
+        selector:
+          matchLabels: {app: web}
+        template:
+          metadata:
+            labels: {app: web}
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25
+              resources:
+                requests: {cpu: 100m}
+  - type: file
+    path: /root/overlay/
+    content: ''
+validation:
+  - args:
+      - get
+      - deploy
+      - prod-web
+      - '-o'
+      - jsonpath={.spec.template.metadata.labels.stage}
+    expect: prod
+    description: Pod template has stage label
+  - args:
+      - get
+      - deploy
+      - prod-web
+      - '-o'
+      - jsonpath={.status.readyReplicas}
+    expect: '1'
+    description: Prefixed deployment ready

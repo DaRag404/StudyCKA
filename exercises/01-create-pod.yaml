@@ -6,6 +6,8 @@ order: 1
 description: |
   Create a Pod named `nginx` in the `default` namespace using image `nginx:1.25`.
 
+  After creating the Pod, verify that its status is `Running`:
+
   ```
   kubectl get pod nginx
   ```

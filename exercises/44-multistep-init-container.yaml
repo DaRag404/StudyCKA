@@ -23,6 +23,9 @@ validation:
   - args: ["get", "pod", "init-pod", "-o", "jsonpath={.spec.volumes[0].name}"]
     expect: "data"
     description: "Pod volume is correctly named data"
+  - args: ["get", "pod", "init-pod", "-o", "jsonpath={.spec.initContainers[0].volumeMounts[0].name}"]
+    expect: "data"
+    description: "Init container mounts the shared volume"
 preconditions:
   - type: manifest
     manifest: |
