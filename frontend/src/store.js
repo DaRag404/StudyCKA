@@ -1,96 +1,78 @@
 import { create } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
+import { load } from 'js-yaml';
+import { setup, check } from './lab/shell.js';
+import { installSystemResources, reconcile } from './lab/cluster.js';
 
-// Persist userId across page reloads
-function getOrCreateUserId() {
-  let id = localStorage.getItem('studycka_user_id');
-  if (!id) {
-    id = uuidv4();
-    localStorage.setItem('studycka_user_id', id);
-  }
-  return id;
-}
-
-// Persist exercise progress across page reloads
-const PROGRESS_KEY = 'studycka_progress';
-
-function loadProgress() {
+const exercises = Object.values(
+  import.meta.glob('../../exercises/*.yaml', { eager: true, query: '?raw', import: 'default' }),
+)
+  .map((text) => load(text))
+  .sort((a, b) => a.order - b.order);
+const prefix = 'studycka_lab_v1:';
+function read(key, fallback) {
   try {
-    const raw = localStorage.getItem(PROGRESS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (_) {
-    return {};
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch {
+    return fallback;
   }
 }
-
-function saveProgress(progress) {
-  try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
-  } catch (_) {}
+function persist(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
-
-const useStore = create((set, get) => ({
-  userId: getOrCreateUserId(),
-
-  // Session state from backend
-  sessionStatus: 'none', // none | starting | waiting | ready | resetting | error
-  sessionError: null,
-
-  // Exercise state
-  exercises: [],
-  selectedExerciseId: null,
-  exerciseProgress: loadProgress(), // { [id]: 'none' | 'passed' | 'failed' }
-
-  // Check result for current exercise
-  checkResult: null, // { passed, results }
-
-  // Setup status for current exercise preconditions
-  setupStatus: 'idle', // idle | running | done | error
-
-  // ── Actions ──────────────────────────────────────────────────────────────
-
-  setSessionStatus: (status, error = null) =>
-    set({ sessionStatus: status, sessionError: error }),
-
-  setExercises: (exercises) => set({ exercises }),
-
+const selected = read('studycka_selected', null);
+function loadLab(id) {
+  const key = prefix + (id || 'practice');
+  const saved = read(key, null);
+  if (!saved) return setup(exercises.find((x) => x.id === id));
+  if (!saved.kubeadmLab && !saved.images) {
+    installSystemResources(saved);
+    reconcile(saved);
+    persist(key, saved);
+  }
+  return saved;
+}
+export const useStore = create((set, get) => ({
+  sessionStatus: 'ready',
+  exercises,
+  selectedExerciseId: selected,
+  lab: loadLab(selected),
+  exerciseProgress: read('studycka_progress', {}),
+  checkResult: read('studycka_result:' + selected, null),
+  save: () => {
+    const s = get();
+    persist(prefix + (s.selectedExerciseId || 'practice'), s.lab);
+  },
   selectExercise: (id) => {
-    const { userId, sessionStatus } = get();
-    set({ selectedExerciseId: id, checkResult: null, setupStatus: 'idle' });
-    if (sessionStatus === 'ready') {
-      set({ setupStatus: 'running' });
-      fetch(`/api/setup/${id}?userId=${userId}`, { method: 'POST' })
-        .then(() => set({ setupStatus: 'done' }))
-        .catch((e) => { console.error('[setup]', e); set({ setupStatus: 'error' }); });
-    }
+    get().save();
+    persist('studycka_selected', id);
+    set({
+      selectedExerciseId: id,
+      lab: loadLab(id),
+      checkResult: read('studycka_result:' + id, null),
+    });
   },
-
-  // Called when session transitions to ready while an exercise is already selected
-  triggerSetupIfNeeded: () => {
-    const { userId, selectedExerciseId } = get();
-    if (!selectedExerciseId) return;
-    set({ setupStatus: 'running' });
-    fetch(`/api/setup/${selectedExerciseId}?userId=${userId}`, { method: 'POST' })
-      .then(() => set({ setupStatus: 'done' }))
-      .catch((e) => { console.error('[setup]', e); set({ setupStatus: 'error' }); });
+  resetLab: () => {
+    const id = get().selectedExerciseId;
+    set({ lab: setup(exercises.find((x) => x.id === id)), checkResult: null });
+    localStorage.removeItem('studycka_result:' + id);
+    get().save();
   },
-
-  setCheckResult: (result) => {
-    const { selectedExerciseId, exerciseProgress } = get();
-    const newProgress = {
-      ...exerciseProgress,
-      [selectedExerciseId]: result.passed ? 'passed' : 'failed',
-    };
-    saveProgress(newProgress);
-    set({ checkResult: result, exerciseProgress: newProgress });
+  checkAnswer: () => {
+    const s = get(),
+      id = s.selectedExerciseId,
+      result = check(
+        s.lab,
+        exercises.find((x) => x.id === id),
+      );
+    const progress = { ...s.exerciseProgress, [id]: result.passed ? 'passed' : 'failed' };
+    persist('studycka_progress', progress);
+    persist('studycka_result:' + id, result);
+    set({ exerciseProgress: progress, checkResult: result });
   },
-
-  clearCheckResult: () => set({ checkResult: null }),
-
   resetProgress: () => {
-    localStorage.removeItem(PROGRESS_KEY);
-    set({ exerciseProgress: {} });
+    localStorage.removeItem('studycka_progress');
+    exercises.forEach((x) => localStorage.removeItem('studycka_result:' + x.id));
+    set({ exerciseProgress: {}, checkResult: null });
   },
 }));
-
 export default useStore;

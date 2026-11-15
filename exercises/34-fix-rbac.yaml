@@ -19,9 +19,12 @@ hints:
   - "The Role only allows `watch` — it needs `get` and `list` added"
   - "Fix: `kubectl edit role pod-reader` — in the `verbs` list, add `get` and `list` alongside `watch`"
 validation:
-  - args: ["get", "role", "pod-reader", "-o", "jsonpath={.rules[0].verbs[0]}"]
-    expect: "get"
-    description: "Role pod-reader includes the get verb"
+  - args: ["auth", "can-i", "get", "pods", "--as=system:serviceaccount:default:dev-sa"]
+    expect: "yes"
+    description: "ServiceAccount can get pods"
+  - args: ["auth", "can-i", "list", "pods", "--as=system:serviceaccount:default:dev-sa"]
+    expect: "yes"
+    description: "ServiceAccount can list pods"
 preconditions:
   - type: manifest
     manifest: |

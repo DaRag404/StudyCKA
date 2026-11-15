@@ -25,6 +25,12 @@ validation:
   - args: ["get", "rolebinding", "rb", "-o", "jsonpath={.subjects[0].name}"]
     expect: "dev"
     description: "RoleBinding is bound to the dev ServiceAccount"
+  - args: ["auth", "can-i", "get", "pods", "--as=system:serviceaccount:default:dev"]
+    expect: "yes"
+    description: "ServiceAccount can get pods"
+  - args: ["auth", "can-i", "list", "pods", "--as=system:serviceaccount:default:dev"]
+    expect: "yes"
+    description: "ServiceAccount can list pods"
 preconditions:
   - type: manifest
     manifest: |

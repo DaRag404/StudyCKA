@@ -16,12 +16,12 @@ description: |
   ssh root@worker
   ```
 
-  SSH password: `cka-worker`
+  The simulated SSH session opens directly on the worker.
 hints:
   - "Check which node is NotReady: `kubectl get nodes`"
-  - "SSH into the worker: `ssh root@worker` (password: cka-worker). Check running processes: `ps aux | grep k3s`"
+  - "SSH into the worker: `ssh root@worker`. Check running processes: `ps aux | grep k3s`"
   - "The k3s agent is not running. Restart it in the background: `k3s agent --snapshotter=native > /var/log/k3s-agent.log 2>&1 &`"
-  - "After restarting the agent, exit the worker (`exit`) and wait ~15 seconds, then verify from the server: `kubectl get nodes`"
+  - "After restarting the agent, exit the worker (`exit`), then verify from the server: `kubectl get nodes`"
 validation:
   - args: ["get", "node", "worker", "-o", "jsonpath={.status.conditions[?(@.type==\"Ready\")].status}"]
     expect: "True"

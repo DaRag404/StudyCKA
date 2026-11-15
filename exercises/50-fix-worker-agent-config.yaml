@@ -16,14 +16,14 @@ description: |
   ssh root@worker
   ```
 
-  SSH password: `cka-worker`
+  The simulated SSH session opens directly on the worker.
 
-  After restarting the agent, wait ~30 seconds before checking your answer.
+  After restarting the agent, check the worker status.
 hints:
   - "SSH in and try restarting the agent: `k3s agent --snapshotter=native > /var/log/k3s-agent.log 2>&1 &` — then check the log: `tail /var/log/k3s-agent.log`"
   - "The log shows the agent cannot reach the server. Inspect the k3s environment config: `cat /etc/profile.d/k3s.sh`"
   - "The K3S_URL contains the wrong port. Fix it: `sed -i 's/9999/6443/' /etc/profile.d/k3s.sh`"
-  - "Reload the config and restart the agent: `. /etc/profile.d/k3s.sh && k3s agent --snapshotter=native > /var/log/k3s-agent.log 2>&1 &` — then `exit` and wait ~30s"
+  - "Reload the config and restart the agent: `. /etc/profile.d/k3s.sh && k3s agent --snapshotter=native > /var/log/k3s-agent.log 2>&1 &` — then `exit` and verify the node status"
 validation:
   - args: ["get", "node", "worker", "-o", "jsonpath={.status.conditions[?(@.type==\"Ready\")].status}"]
     expect: "True"

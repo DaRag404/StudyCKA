@@ -1,0 +1,88 @@
+id: '57'
+title: Attach an HTTPRoute to a Gateway
+category: Services & Networking
+difficulty: medium
+order: 57
+description: >-
+  Inspect Gateway public. Fix ~/route.yaml so shop.lab routes to Service web on port 80. Verify
+  the route is accepted and its backend resolves.
+hints:
+  - Use `kubectl get gateway public -o yaml` and `kubectl get svc web`.
+  - Edit the parentRefs and backendRefs in `vi route.yaml`, then apply the file.
+preconditions:
+  - type: manifest
+    manifest: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: web
+      spec:
+        replicas: 1
+        selector:
+          matchLabels: {app: web}
+        template:
+          metadata:
+            labels: {app: web}
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.25
+              resources:
+                requests: {cpu: 100m}
+  - type: manifest
+    manifest: |
+      apiVersion: v1
+      kind: Service
+      metadata: {name: web}
+      spec:
+        selector: {app: web}
+        ports: [{port: 80, targetPort: 80}]
+  - type: manifest
+    manifest: |
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: GatewayClass
+      metadata: {name: lab}
+      spec: {controllerName: studycka.local/gateway}
+      ---
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: Gateway
+      metadata: {name: public}
+      spec:
+        gatewayClassName: lab
+        listeners: [{name: http, protocol: HTTP, port: 80}]
+  - type: file
+    path: /root/route.yaml
+    content: |
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata: {name: shop}
+      spec:
+        parentRefs: [{name: missing}]
+        hostnames: [shop.lab]
+        rules:
+          - backendRefs: [{name: wrong, port: 80}]
+validation:
+  - args:
+      - get
+      - httproute
+      - shop
+      - '-o'
+      - jsonpath={.spec.hostnames[0]}
+    expect: shop.lab
+    description: Correct host
+  - args:
+      - get
+      - httproute
+      - shop
+      - '-o'
+      - jsonpath={.status.parents[0].conditions[0].status}
+    expect: 'True'
+    description: Gateway accepted route
+  - args:
+      - get
+      - httproute
+      - shop
+      - '-o'
+      - jsonpath={.status.parents[0].conditions[1].status}
+    expect: 'True'
+    description: Service reference resolved
