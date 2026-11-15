@@ -1,0 +1,49 @@
+StudyCKA.exercises.push({
+  id: '03',
+  title: 'Scale a Deployment',
+  difficulty: 'easy',
+  category: 'Workloads',
+  order: 3,
+  description: `A Deployment named \`web\` is running with 1 replica. Scale it to **5 replicas**.
+
+\`\`\`
+kubectl get deployment web
+\`\`\`
+`,
+  hints: [
+    'Scale imperatively: `kubectl scale deployment web --replicas=5`',
+    'Verify: `kubectl get deployment web` — the READY column should show 5/5',
+    'Alternative: `kubectl edit deployment web` — change `replicas: 1` to `replicas: 5`, then save and exit',
+  ],
+  validation: [
+    {
+      args: ['get', 'deploy', 'web', '-o', 'jsonpath={.spec.replicas}'],
+      expect: '5',
+      description: 'Deployment has 5 replicas',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+`,
+    },
+  ],
+});

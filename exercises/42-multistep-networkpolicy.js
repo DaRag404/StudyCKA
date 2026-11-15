@@ -1,0 +1,51 @@
+StudyCKA.exercises.push({
+  id: '42',
+  title: 'Fix NetworkPolicy — Allow Specific Pod Traffic',
+  difficulty: 'hard',
+  category: 'Services & Networking',
+  order: 42,
+  description: `A NetworkPolicy \`np\` protects pods labelled \`app=secure\` but currently blocks
+**all** ingress traffic — even from authorized pods.
+
+Fix the NetworkPolicy so only pods with label \`access=true\` can reach \`app=secure\`.
+
+\`\`\`
+kubectl get networkpolicy np -o yaml
+kubectl get pods --show-labels
+\`\`\`
+`,
+  hints: [
+    'Inspect the policy: `kubectl get networkpolicy np -o yaml` — the `ingress` array is empty, which means deny all',
+    "Add an ingress rule with `from.podSelector.matchLabels: {access: 'true'}`",
+    'Edit the NetworkPolicy: `kubectl edit networkpolicy np`',
+    'Verify: `kubectl get networkpolicy np -o jsonpath={.spec.ingress[0].from[0].podSelector}`',
+  ],
+  validation: [
+    {
+      args: [
+        'get',
+        'networkpolicy',
+        'np',
+        '-o',
+        'jsonpath={.spec.ingress[0].from[0].podSelector.matchLabels.access}',
+      ],
+      expect: 'true',
+      description: 'NetworkPolicy allows pods with access=true',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np
+spec:
+  podSelector:
+    matchLabels:
+      app: secure
+  ingress: []
+`,
+    },
+  ],
+});

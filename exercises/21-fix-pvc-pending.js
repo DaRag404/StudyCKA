@@ -1,0 +1,82 @@
+StudyCKA.exercises.push({
+  id: '21',
+  title: 'Fix PVC Stuck in Pending (Wrong StorageClass)',
+  difficulty: 'medium',
+  category: 'Troubleshooting',
+  order: 21,
+  description: `A PersistentVolumeClaim named \`data-pvc\` is stuck in **Pending** state.
+The pod \`data-pod\` waiting for it cannot start.
+
+Find why the PVC is not binding and fix it.
+
+\`\`\`
+kubectl get pvc data-pvc
+kubectl describe pvc data-pvc
+\`\`\`
+`,
+  hints: [
+    "Check the PVC description: look for 'no persistent volumes available for this claim'",
+    'List available storage classes: `kubectl get storageclass`',
+    "The PVC requests `fast-nvme-storage` which doesn't exist — k3s provides `local-path`",
+    '`storageClassName` is immutable — delete the PVC and recreate using the template at `/root/pvc.yaml`',
+  ],
+  validation: [
+    {
+      args: ['get', 'pvc', 'data-pvc', '-o', 'jsonpath={.spec.storageClassName}'],
+      expect: 'local-path',
+      description: 'PVC references the existing local-path StorageClass',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'file',
+      path: '/root/pvc.yaml',
+      content: `apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: <storage-class>
+  resources:
+    requests:
+      storage: 500Mi
+`,
+    },
+    {
+      type: 'manifest',
+      manifest: `apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: fast-nvme-storage
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-pod
+  namespace: default
+spec:
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: data-pvc
+  containers:
+  - name: nginx
+    image: nginx:1.25
+    volumeMounts:
+    - name: data
+      mountPath: /data
+`,
+    },
+  ],
+});

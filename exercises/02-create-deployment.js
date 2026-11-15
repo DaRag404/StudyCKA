@@ -1,0 +1,32 @@
+StudyCKA.exercises.push({
+  id: '02',
+  title: 'Create a Deployment',
+  difficulty: 'easy',
+  category: 'Workloads',
+  order: 2,
+  description: `Create a Deployment named \`web\` with **3 replicas** using image \`nginx:1.25\`.
+
+\`\`\`
+kubectl get deployment web
+kubectl get pods -l app=web
+\`\`\`
+`,
+  hints: [
+    'Use: `kubectl create deployment web --image=nginx:1.25 --replicas=3`',
+    'Verify replica count: `kubectl get deploy web` — check the READY column shows 3/3',
+    'Inspect the full spec: `kubectl get deploy web -o yaml`',
+  ],
+  validation: [
+    {
+      args: ['get', 'deploy', 'web', '-o', 'jsonpath={.spec.replicas}'],
+      expect: '3',
+      description: 'Deployment has 3 replicas',
+    },
+    {
+      args: ['get', 'deploy', 'web', '-o', 'jsonpath={.spec.template.spec.containers[0].image}'],
+      expect: 'nginx:1.25',
+      description: 'Deployment uses image nginx:1.25',
+    },
+  ],
+  preconditions: [],
+});

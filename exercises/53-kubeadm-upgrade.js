@@ -1,0 +1,32 @@
+StudyCKA.exercises.push({
+  id: '53',
+  title: 'Upgrade the Control Plane',
+  category: 'Cluster Administration',
+  difficulty: 'medium',
+  order: 53,
+  description:
+    'Inspect the available upgrade on this kubeadm cluster. Upgrade the control plane from v1.34.0 to v1.35.0.',
+  hints: ['Run `kubeadm upgrade plan`, then `kubeadm upgrade apply v1.35.0`.'],
+  preconditions: [
+    {
+      type: 'kubeadm',
+      version: 'v1.34.0',
+    },
+  ],
+  validation: [
+    {
+      args: [
+        'get',
+        'cm',
+        'kubeadm-config',
+        '-n',
+        'kube-system',
+        '-o',
+        'jsonpath={.data.ClusterConfiguration}',
+      ],
+      expect: 'v1.35.0',
+      description: 'Control plane version recorded',
+      match: 'contains',
+    },
+  ],
+});

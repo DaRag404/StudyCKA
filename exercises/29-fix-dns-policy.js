@@ -1,0 +1,47 @@
+StudyCKA.exercises.push({
+  id: '29',
+  title: 'Fix Pod Cannot Resolve Cluster DNS',
+  difficulty: 'medium',
+  category: 'Troubleshooting',
+  order: 29,
+  description: `A Pod named \`dns-pod\` cannot resolve Kubernetes service names. The DNS policy
+is misconfigured, causing the pod to use the host's resolver instead of the
+cluster DNS.
+
+Fix the DNS policy so the pod uses cluster-internal DNS.
+
+\`\`\`
+kubectl get pod dns-pod -o jsonpath='{.spec.dnsPolicy}'
+kubectl exec dns-pod -- nslookup kubernetes
+\`\`\`
+`,
+  hints: [
+    'Check the current DNS policy: `kubectl get pod dns-pod -o jsonpath={.spec.dnsPolicy}`',
+    "Policy `Default` uses the node's DNS — it cannot resolve cluster service names",
+    'The correct policy for cluster DNS is `ClusterFirst`',
+    'Export, edit, delete, re-apply: change `dnsPolicy: Default` to `dnsPolicy: ClusterFirst`',
+  ],
+  validation: [
+    {
+      args: ['get', 'pod', 'dns-pod', '-o', 'jsonpath={.spec.dnsPolicy}'],
+      expect: 'ClusterFirst',
+      description: 'Pod uses ClusterFirst DNS policy',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-pod
+spec:
+  dnsPolicy: Default
+  containers:
+  - name: app
+    image: busybox:1.35
+    command: ["sleep", "3600"]
+`,
+    },
+  ],
+});

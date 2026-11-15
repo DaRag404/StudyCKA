@@ -1,14 +1,123 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-950">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StudyCKA — Kubernetes Training</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⎈</text></svg>" />
-    <script defer src="./assets/studycka.js"></script>
-    <link rel="stylesheet" href="./assets/studycka.css">
-  </head>
-  <body class="h-full">
-    <div id="root" class="h-full"></div>
-  </body>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyCKA — Kubernetes Training</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⎈</text></svg>">
+  <link rel="stylesheet" href="vendor/xterm.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside>
+    <header class="sidebar-head">
+      <div class="brand"><span>⎈</span><div><h1>StudyCKA</h1><small>Kubernetes Lab</small></div></div>
+      <div class="row progress"><span>Progress: <b id="passed">0</b> / <span id="total"></span></span><button id="reset-progress" title="Reset progress">↺ Reset</button></div>
+      <div class="track"><div id="bar"></div></div>
+      <div class="row timer"><span>⏱ <b id="clock"></b></span><span><button id="play"></button><button id="reset-time" title="Reset timer">↺</button></span></div>
+      <button id="resources-toggle" class="row">📚 &nbsp; Resources <span>▾</span></button>
+      <div id="resources" hidden>
+        <a href="https://kubernetes.io/docs/home/">↗ Kubernetes Docs</a>
+        <a href="https://kubernetes.io/docs/reference/kubectl/cheatsheet/">↗ kubectl Cheat Sheet</a>
+        <a href="https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/">↗ CKA Exam Info</a>
+        <a href="https://github.com/cncf/curriculum">↗ CKA Curriculum</a>
+      </div>
+    </header>
+    <nav id="exercises" aria-label="Exercises"></nav>
+    <footer><i class="light"></i>Cluster ready</footer>
+  </aside>
+  <main>
+    <section id="detail">
+      <p id="empty">Select an exercise from the list</p>
+      <div id="exercise" hidden>
+        <header class="exercise-head"><div><small id="category"></small><h2 id="title"></h2></div><span id="level"></span></header>
+        <div id="reading"><article id="description"></article><button id="hint-toggle"></button><ul id="hints" hidden></ul><div id="result" hidden></div></div>
+        <div class="actions"><button id="check">✓ Check Answer</button><button id="reset-lab">↺ Reset Environment</button></div>
+      </div>
+    </section>
+    <div id="divider" role="separator" aria-label="Resize terminal"><i></i><i></i><i></i></div>
+    <section id="terminal">
+      <header class="toolbar"><div class="window-controls"><button data-mode="desc-max" title="Collapse terminal">✕</button><button data-mode="split" title="Restore split">↕</button><button data-mode="term-max" title="Maximise terminal">⤢</button></div><span class="shell-name">bash — cka-lab</span><span class="connected"><i class="light"></i>Connected</span><button id="reconnect" title="Reconnect terminal">↺</button></header>
+      <div id="console" class="xterm-container"></div>
+    </section>
+  </main>
+  <template id="exercise-row"><button class="exercise-row"><span class="status-icon"></span><span class="exercise-label"><span class="exercise-title"></span><span class="metadata"><span></span><small></small></span></span></button></template>
+  <script defer src="js/init.js"></script>
+  <script defer src="vendor/yaml.js"></script>
+  <script defer src="vendor/bash.js"></script>
+  <script defer src="vendor/xterm.js"></script>
+  <script defer src="vendor/addon-fit.js"></script>
+  <script defer src="vendor/addon-web-links.js"></script>
+  <script defer src="vendor/marked.js"></script>
+  <script defer src="js/lab/rke2.js"></script>
+  <script defer src="js/lab/images.js"></script>
+  <script defer src="js/lab/cluster.js"></script>
+  <script defer src="js/lab/admin.js"></script>
+  <script defer src="js/lab/linux-files.js"></script>
+  <script defer src="js/lab/kubectl.js"></script>
+  <script defer src="js/lab/pod-shell.js"></script>
+  <script defer src="js/lab/shell.js"></script>
+  <script defer src="js/lab/session.js"></script>
+  <script defer src="js/lab/editor.js"></script>
+  <script defer src="js/lab/terminal.js"></script>
+  <script defer src="exercises/01-create-pod.js"></script>
+  <script defer src="exercises/02-create-deployment.js"></script>
+  <script defer src="exercises/03-scale-deployment.js"></script>
+  <script defer src="exercises/04-expose-service.js"></script>
+  <script defer src="exercises/05-create-namespace.js"></script>
+  <script defer src="exercises/06-configmap.js"></script>
+  <script defer src="exercises/07-secret.js"></script>
+  <script defer src="exercises/08-resource-limits.js"></script>
+  <script defer src="exercises/09-liveness-probe.js"></script>
+  <script defer src="exercises/10-labels-selectors.js"></script>
+  <script defer src="exercises/11-init-container.js"></script>
+  <script defer src="exercises/12-create-job.js"></script>
+  <script defer src="exercises/13-cronjob.js"></script>
+  <script defer src="exercises/14-pv-pvc.js"></script>
+  <script defer src="exercises/15-rolling-update.js"></script>
+  <script defer src="exercises/16-fix-crashloopbackoff.js"></script>
+  <script defer src="exercises/17-fix-imagepullbackoff.js"></script>
+  <script defer src="exercises/18-fix-service-selector.js"></script>
+  <script defer src="exercises/19-fix-rbac.js"></script>
+  <script defer src="exercises/20-fix-node-taint.js"></script>
+  <script defer src="exercises/21-fix-pvc-pending.js"></script>
+  <script defer src="exercises/22-fix-liveness-probe.js"></script>
+  <script defer src="exercises/23-fix-resource-oom.js"></script>
+  <script defer src="exercises/24-fix-wrong-serviceaccount.js"></script>
+  <script defer src="exercises/25-fix-networkpolicy.js"></script>
+  <script defer src="exercises/26-create-daemonset.js"></script>
+  <script defer src="exercises/27-fix-service-targetport.js"></script>
+  <script defer src="exercises/28-rollback-deployment.js"></script>
+  <script defer src="exercises/29-fix-dns-policy.js"></script>
+  <script defer src="exercises/30-fix-configmap-key.js"></script>
+  <script defer src="exercises/31-fix-secret-mount.js"></script>
+  <script defer src="exercises/32-resource-quota.js"></script>
+  <script defer src="exercises/33-fix-pvc-accessmode.js"></script>
+  <script defer src="exercises/34-fix-rbac.js"></script>
+  <script defer src="exercises/35-manual-scheduling.js"></script>
+  <script defer src="exercises/36-multistep-app-stack.js"></script>
+  <script defer src="exercises/37-sidecar-container.js"></script>
+  <script defer src="exercises/38-multistep-pv-pvc-pod.js"></script>
+  <script defer src="exercises/39-debug-readiness.js"></script>
+  <script defer src="exercises/40-multistep-rbac.js"></script>
+  <script defer src="exercises/41-debug-imagepull.js"></script>
+  <script defer src="exercises/42-multistep-networkpolicy.js"></script>
+  <script defer src="exercises/43-debug-node-affinity.js"></script>
+  <script defer src="exercises/44-multistep-init-container.js"></script>
+  <script defer src="exercises/45-nodeport-service.js"></script>
+  <script defer src="exercises/46-worker-node-not-ready.js"></script>
+  <script defer src="exercises/47-drain-worker-node.js"></script>
+  <script defer src="exercises/48-fix-pending-pod-node-label.js"></script>
+  <script defer src="exercises/49-taint-worker-node.js"></script>
+  <script defer src="exercises/50-fix-worker-agent-config.js"></script>
+  <script defer src="exercises/51-preload-worker-image.js"></script>
+  <script defer src="exercises/52-kubeadm-bootstrap.js"></script>
+  <script defer src="exercises/53-kubeadm-upgrade.js"></script>
+  <script defer src="exercises/54-helm-release.js"></script>
+  <script defer src="exercises/55-kustomize-overlay.js"></script>
+  <script defer src="exercises/56-ingress-routing.js"></script>
+  <script defer src="exercises/57-gateway-api.js"></script>
+  <script defer src="exercises/58-autoscaling.js"></script>
+  <script defer src="js/app.js"></script>
+</body>
 </html>

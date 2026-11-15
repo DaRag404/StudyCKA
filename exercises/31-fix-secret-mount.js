@@ -1,0 +1,58 @@
+StudyCKA.exercises.push({
+  id: '31',
+  title: 'Fix Secret Volume Mount Failing',
+  difficulty: 'medium',
+  category: 'Troubleshooting',
+  order: 31,
+  description: `A Pod named \`secret-pod\` cannot start because it references a Secret that
+does not exist.
+
+Fix the volume reference so the pod mounts the correct Secret.
+
+\`\`\`
+kubectl get pod secret-pod
+kubectl describe pod secret-pod
+\`\`\`
+`,
+  hints: [
+    "Check the Events: `kubectl describe pod secret-pod` — look for 'secret not found'",
+    'List available secrets: `kubectl get secrets` — find the actual secret name',
+    'The pod volume references `wrong-secret` but the Secret is named `my-secret`',
+    'Export, fix, delete, re-apply: change `secretName: wrong-secret` to `secretName: my-secret`',
+  ],
+  validation: [
+    {
+      args: ['get', 'pod', 'secret-pod', '-o', 'jsonpath={.status.phase}'],
+      expect: 'Running',
+      description: 'Pod secret-pod is Running',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: v1
+kind: Secret
+metadata:
+  name: my-secret
+stringData:
+  password: admin
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-pod
+spec:
+  containers:
+  - name: app
+    image: nginx:1.25
+    volumeMounts:
+    - name: secret-vol
+      mountPath: "/etc/secret"
+  volumes:
+  - name: secret-vol
+    secret:
+      secretName: wrong-secret
+`,
+    },
+  ],
+});

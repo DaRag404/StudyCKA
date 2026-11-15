@@ -1,0 +1,77 @@
+StudyCKA.exercises.push({
+  id: '24',
+  title: 'Fix Pod Using Wrong ServiceAccount',
+  difficulty: 'medium',
+  category: 'Troubleshooting',
+  order: 24,
+  description: `A Pod named \`api-pod\` needs to list ConfigMaps in the \`default\` namespace.
+A ServiceAccount \`api-sa\` and RoleBinding with the correct permissions exist,
+but the pod is using the \`default\` ServiceAccount which has no permissions.
+
+Recreate the pod so it uses \`api-sa\`.
+
+\`\`\`
+kubectl get pod api-pod -o jsonpath='{.spec.serviceAccountName}'
+kubectl auth can-i list configmaps --as=system:serviceaccount:default:api-sa
+\`\`\`
+`,
+  hints: [
+    "Confirm the pod's current SA: `kubectl get pod api-pod -o jsonpath={.spec.serviceAccountName}`",
+    'Confirm `api-sa` has access: `kubectl auth can-i list configmaps --as=system:serviceaccount:default:api-sa`',
+    '`spec.serviceAccountName` is immutable — export, edit, delete, re-apply',
+    'Change `serviceAccountName: default` to `serviceAccountName: api-sa` in the YAML',
+  ],
+  validation: [
+    {
+      args: ['get', 'pod', 'api-pod', '-o', 'jsonpath={.spec.serviceAccountName}'],
+      expect: 'api-sa',
+      description: 'Pod is now using the api-sa ServiceAccount',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: configmap-reader
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: configmap-reader-binding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: api-sa
+  namespace: default
+roleRef:
+  kind: Role
+  name: configmap-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-pod
+  namespace: default
+spec:
+  serviceAccountName: default
+  containers:
+  - name: app
+    image: nginx:1.25
+`,
+    },
+  ],
+});

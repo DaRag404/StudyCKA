@@ -1,0 +1,33 @@
+StudyCKA.exercises.push({
+  id: '05',
+  title: 'Create a Namespace',
+  difficulty: 'easy',
+  category: 'Core Concepts',
+  order: 5,
+  description: `Create a Namespace named \`staging\`, then create a Pod named \`nginx\` using
+image \`nginx:1.25\` inside it.
+
+\`\`\`
+kubectl get ns staging
+kubectl get pods -n staging
+\`\`\`
+`,
+  hints: [
+    'Create the namespace: `kubectl create namespace staging`',
+    'Deploy the pod into it: `kubectl run nginx --image=nginx:1.25 -n staging`',
+    'Use `-n <namespace>` to target resources in a specific namespace',
+  ],
+  validation: [
+    {
+      args: ['get', 'ns', 'staging', '-o', 'jsonpath={.metadata.name}'],
+      expect: 'staging',
+      description: 'Namespace staging exists',
+    },
+    {
+      args: ['get', 'pod', 'nginx', '-n', 'staging', '-o', 'jsonpath={.spec.containers[0].image}'],
+      expect: 'nginx:1.25',
+      description: 'Pod nginx runs in the staging namespace',
+    },
+  ],
+  preconditions: [],
+});

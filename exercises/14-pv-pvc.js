@@ -1,0 +1,80 @@
+StudyCKA.exercises.push({
+  id: '14',
+  title: 'PersistentVolumeClaim and Pod Volume Mount',
+  difficulty: 'medium',
+  category: 'Storage',
+  order: 14,
+  description: `Create a PersistentVolumeClaim named \`my-pvc\` requesting **500Mi** with
+\`ReadWriteOnce\` access mode. Then create a Pod named \`storage-pod\` using
+image \`nginx:1.25\` that mounts the PVC at \`/usr/share/nginx/html\`.
+
+Templates are at \`/root/pvc.yaml\` and \`/root/pod.yaml\`. Fill in the missing
+fields and apply both.
+
+\`\`\`
+kubectl get pvc my-pvc
+kubectl get pod storage-pod
+\`\`\`
+`,
+  hints: [
+    'k3s includes the `local-path` provisioner — it automatically creates a PV to satisfy the claim',
+    'Apply the PVC first: `kubectl apply -f /root/pvc.yaml` — wait for STATUS `Bound`',
+    'The pod needs a `volumes` entry referencing the PVC and a `volumeMounts` entry with the path',
+    'Apply the pod: `kubectl apply -f /root/pod.yaml`',
+  ],
+  validation: [
+    {
+      args: ['get', 'pvc', 'my-pvc', '-o', 'jsonpath={.spec.accessModes[0]}'],
+      expect: 'ReadWriteOnce',
+      description: 'PVC has ReadWriteOnce access mode',
+    },
+    {
+      args: [
+        'get',
+        'pod',
+        'storage-pod',
+        '-o',
+        'jsonpath={.spec.volumes[0].persistentVolumeClaim.claimName}',
+      ],
+      expect: 'my-pvc',
+      description: 'Pod mounts the my-pvc claim',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'file',
+      path: '/root/pvc.yaml',
+      content: `apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+  - <access-mode>
+  resources:
+    requests:
+      storage: <storage>
+`,
+    },
+    {
+      type: 'file',
+      path: '/root/pod.yaml',
+      content: `apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-pod
+spec:
+  volumes:
+  - name: storage
+    persistentVolumeClaim:
+      claimName: my-pvc
+  containers:
+  - name: nginx
+    image: nginx:1.25
+    volumeMounts:
+    - name: storage
+      mountPath: <mount-path>
+`,
+    },
+  ],
+});

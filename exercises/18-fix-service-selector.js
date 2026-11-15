@@ -1,0 +1,68 @@
+StudyCKA.exercises.push({
+  id: '18',
+  title: 'Fix Service Has No Endpoints',
+  difficulty: 'medium',
+  category: 'Troubleshooting',
+  order: 18,
+  description: `A Service named \`web-svc\` exists but has **no endpoints** — traffic cannot
+reach the pods.
+
+Find the mismatch between the Service selector and the pod labels, then fix it.
+
+\`\`\`
+kubectl get endpoints web-svc
+kubectl get pods --show-labels
+\`\`\`
+`,
+  hints: [
+    'Check what the service selects: `kubectl get svc web-svc -o jsonpath={.spec.selector}`',
+    'Check what labels the pods actually have: `kubectl get pods --show-labels`',
+    "The selector key or value doesn't match the pod label — fix with: `kubectl edit svc web-svc` and change the selector `app` value to `nginx`",
+    'Verify: `kubectl get endpoints web-svc` — should show at least one IP',
+  ],
+  validation: [
+    {
+      args: ['get', 'svc', 'web-svc', '-o', 'jsonpath={.spec.selector.app}'],
+      expect: 'nginx',
+      description: 'Service selector correctly targets app=nginx pods',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deploy
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-svc
+  namespace: default
+spec:
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 80
+`,
+    },
+  ],
+});

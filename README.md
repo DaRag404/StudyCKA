@@ -7,7 +7,7 @@ Practice for the Certified Kubernetes Administrator (CKA) exam with **58 hands-o
 ## Quick start
 
 1. Download the repository and extract the ZIP.
-2. Open **index.html** in your browser. Keep the **assets/** folder beside it.
+2. Open **index.html** in your browser. Keep the extracted folders together.
 3. Choose an exercise, work in the terminal and select **Check Answer**.
 
 Your files, cluster and progress are saved in the browser’s localStorage. Reopen the same file in the same browser profile to pick up where you left off.
@@ -50,17 +50,16 @@ In Vi, press **i** to edit, **Esc** to finish editing, then type **:wq** and pre
 </details>
 
 <details>
-<summary>Add an exercise or rebuild the app</summary>
+<summary>Edit the app or add an exercise</summary>
 
-Use Node.js 20 or later for development. Add a YAML file to <code>exercises/</code> and a solution to <code>frontend/tests/lab.test.js</code>. The [first exercise](exercises/01-create-pod.yaml) shows how to define a task, hints and answer checks.
+Edit **index.html** for the layout, **style.css** for the design, and **js/app.js** for the interface. The terminal, editor and Kubernetes simulator are in [js/lab/](js/lab/). Save your changes and reload the page.
 
-Run these commands from the repository root to test and regenerate <code>index.html</code> and <code>assets/</code>.
+Each exercise has its own JavaScript file in [exercises/](exercises/). To add one, copy the [first exercise](exercises/01-create-pod.js), give it a unique ID and order, then add its script tag alongside the others in **index.html**. The local libraries in **vendor/** ship with the app.
+
+To run the automated tests, use Node.js 22 or later from the repository root.
 
 ~~~sh
-npm ci --prefix frontend
-npm test --prefix frontend
-npm run lint --prefix frontend
-npm run build --prefix frontend
+node --test tests/*.test.mjs
 ~~~
 
 </details>

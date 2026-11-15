@@ -1,0 +1,66 @@
+StudyCKA.exercises.push({
+  id: '34',
+  title: 'Fix RBAC Role Missing Verb',
+  difficulty: 'medium',
+  category: 'Security',
+  order: 34,
+  description: `A ServiceAccount \`dev-sa\` is bound to a Role \`pod-reader\`, but it still
+cannot get or list Pods. The Role is missing the required verbs.
+
+Fix the Role so \`dev-sa\` can get and list Pods.
+
+\`\`\`
+kubectl auth can-i get pods --as=system:serviceaccount:default:dev-sa
+kubectl get role pod-reader -o yaml
+\`\`\`
+`,
+  hints: [
+    'Check current access: `kubectl auth can-i get pods --as=system:serviceaccount:default:dev-sa`',
+    'Inspect the Role: `kubectl get role pod-reader -o yaml` — look at the `verbs` field',
+    'The Role only allows `watch` — it needs `get` and `list` added',
+    'Fix: `kubectl edit role pod-reader` — in the `verbs` list, add `get` and `list` alongside `watch`',
+  ],
+  validation: [
+    {
+      args: ['auth', 'can-i', 'get', 'pods', '--as=system:serviceaccount:default:dev-sa'],
+      expect: 'yes',
+      description: 'ServiceAccount can get pods',
+    },
+    {
+      args: ['auth', 'can-i', 'list', 'pods', '--as=system:serviceaccount:default:dev-sa'],
+      expect: 'yes',
+      description: 'ServiceAccount can list pods',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader-binding
+subjects:
+- kind: ServiceAccount
+  name: dev-sa
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+`,
+    },
+  ],
+});

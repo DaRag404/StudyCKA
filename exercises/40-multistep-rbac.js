@@ -1,0 +1,74 @@
+StudyCKA.exercises.push({
+  id: '40',
+  title: 'Fix RoleBinding Wrong Subject',
+  difficulty: 'hard',
+  category: 'Security',
+  order: 40,
+  description: `A ServiceAccount \`dev\` should be able to list Pods via a Role and RoleBinding,
+but access is denied. There are two problems:
+- The Role only allows \`watch\` — it needs \`get\` and \`list\`
+- The RoleBinding binds to \`wrong\` instead of \`dev\`
+
+Fix both issues.
+
+\`\`\`
+kubectl auth can-i list pods --as=system:serviceaccount:default:dev
+kubectl get role role -o yaml
+kubectl get rolebinding rb -o yaml
+\`\`\`
+`,
+  hints: [
+    'Check access: `kubectl auth can-i list pods --as=system:serviceaccount:default:dev`',
+    'Fix the Role verbs: `kubectl edit role role` — add `get` and `list` to the verbs list',
+    'Fix the RoleBinding subject: `kubectl edit rolebinding rb` — change `name: wrong` to `name: dev`',
+    'Verify: `kubectl auth can-i list pods --as=system:serviceaccount:default:dev` — should print `yes`',
+  ],
+  validation: [
+    {
+      args: ['get', 'rolebinding', 'rb', '-o', 'jsonpath={.subjects[0].name}'],
+      expect: 'dev',
+      description: 'RoleBinding is bound to the dev ServiceAccount',
+    },
+    {
+      args: ['auth', 'can-i', 'get', 'pods', '--as=system:serviceaccount:default:dev'],
+      expect: 'yes',
+      description: 'ServiceAccount can get pods',
+    },
+    {
+      args: ['auth', 'can-i', 'list', 'pods', '--as=system:serviceaccount:default:dev'],
+      expect: 'yes',
+      description: 'ServiceAccount can list pods',
+    },
+  ],
+  preconditions: [
+    {
+      type: 'manifest',
+      manifest: `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rb
+subjects:
+- kind: ServiceAccount
+  name: wrong
+roleRef:
+  kind: Role
+  name: role
+  apiGroup: rbac.authorization.k8s.io
+`,
+    },
+  ],
+});

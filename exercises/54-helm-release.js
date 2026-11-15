@@ -1,0 +1,58 @@
+StudyCKA.exercises.push({
+  id: '54',
+  title: 'Install and Upgrade a Helm Release',
+  category: 'Application Management',
+  difficulty: 'medium',
+  order: 54,
+  description:
+    'Inspect the local chart in ~/web-chart. Install it as shop, then upgrade the release to three replicas.',
+  hints: [
+    'Run `helm install shop ./web-chart` and inspect `helm list`.',
+    'Run `helm upgrade shop ./web-chart --set replicas=3`.',
+  ],
+  preconditions: [
+    {
+      type: 'file',
+      path: '/root/web-chart/Chart.yaml',
+      content: `apiVersion: v2
+name: web
+version: 0.1.0
+`,
+    },
+    {
+      type: 'file',
+      path: '/root/web-chart/values.yaml',
+      content: `replicas: 1
+`,
+    },
+    {
+      type: 'file',
+      path: '/root/web-chart/templates/deployment.yaml',
+      content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels: {app: web}
+  template:
+    metadata:
+      labels: {app: web}
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        resources:
+          requests: {cpu: 100m}
+`,
+    },
+  ],
+  validation: [
+    {
+      args: ['get', 'deploy', 'shop', '-o', 'jsonpath={.status.readyReplicas}'],
+      expect: '3',
+      description: 'Three ready replicas',
+    },
+  ],
+});

@@ -1,0 +1,50 @@
+StudyCKA.exercises.push({
+  id: '51',
+  title: 'Preload an Image on the Worker',
+  category: 'Troubleshooting',
+  difficulty: 'medium',
+  order: 51,
+  description:
+    'The cache-test Pod is pinned to worker with imagePullPolicy Never. Inspect its events and preload busybox:1.36 on the correct node. Keep the policy in place.',
+  hints: [
+    'Run `kubectl describe pod cache-test`, then `ssh worker`.',
+    'Use `crictl images` and `crictl pull busybox:1.36`. Return with `exit`.',
+  ],
+  preconditions: [
+    {
+      type: 'worker-node',
+    },
+    {
+      type: 'manifest',
+      manifest: `apiVersion: v1
+kind: Pod
+metadata: {name: cache-test}
+spec:
+  nodeName: worker
+  containers: [{name: probe, image: "busybox:1.36", imagePullPolicy: Never, command: [sleep, "3600"]}]
+`,
+    },
+  ],
+  validation: [
+    {
+      args: ['get', 'pod', 'cache-test', '-o', 'jsonpath={.status.phase}'],
+      expect: 'Running',
+      description: 'Pod is running',
+    },
+    {
+      args: ['get', 'pod', 'cache-test', '-o', 'jsonpath={.spec.containers[0].imagePullPolicy}'],
+      expect: 'Never',
+      description: 'Pull policy preserved',
+    },
+    {
+      args: ['get', 'pod', 'cache-test', '-o', 'jsonpath={.spec.nodeName}'],
+      expect: 'worker',
+      description: 'Pod runs on worker',
+    },
+    {
+      args: ['get', 'pod', 'cache-test', '-o', 'jsonpath={.spec.containers[0].image}'],
+      expect: 'busybox:1.36',
+      description: 'Requested image used',
+    },
+  ],
+});
