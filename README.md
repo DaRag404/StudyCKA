@@ -1,26 +1,66 @@
 # StudyCKA ⎈
 
-Open **index.html** in the root of the downloaded repository. Keep the adjacent **assets/** directory with it. All 58 exercises work offline in a modern desktop browser; no install, server, account, database or container runtime is needed. For static hosting, copy the same HTML file and assets directory.
+Practice for the Certified Kubernetes Administrator (CKA) exam with **58 hands-on exercises**. Use the built-in terminal to create workloads, diagnose failures and check your answers against a simulated Kubernetes cluster. The whole lab runs offline in your browser.
 
-Choose an exercise, use the terminal, then select **Check Answer**. The cluster, virtual files, shell history, recent terminal output, progress, timer and panel settings stay in the browser’s localStorage. Returning to an exercise restores its workspace. **Reset Environment** recreates just the current lab; **Reset** beside the progress bar clears grading history. Use the same browser profile and file location (or the same website address) to resume. Private browsing or clearing site data can discard saved work.
+![StudyCKA exercise view with the task list, instructions and Kubernetes terminal](docs/studycka-preview.png)
 
-The terminal runs a Bash-compatible JavaScript interpreter inside xterm. Use shell variables, pipelines, loops, redirection and here-documents alongside `kubectl` and the original shortcuts `k`, `kgp`, `kgd`, `kgs`, `kgn` and `kga`. To edit a manifest, run `vi file.yaml` or `kubectl edit deployment web`. Press **i** to insert, **Esc** to return to normal mode and **:wq** followed by **Enter** to save and exit. The terminal also supports basic Nano editing with **Ctrl+O**, **Enter** and **Ctrl+X**. Set `KUBE_EDITOR=nano` to use Nano for kubectl edits. SSH switches to a simulated worker with its own files, logs and agent state. No commands run on the host. The simulator models exercise scenarios; it does not run Linux executables, download images, send packets or implement the entire Kubernetes API.
+## Quick start
 
-The simulated hosts have a navigable Linux filesystem. Try `ls -la ~`, `tree -L 2 /etc`, or `cd /var/lib/rancher/rke2/agent/pod-manifests`. Vi is the default for `$EDITOR`, `editor` and `kubectl edit`. Files belong to the current lab and host. Use `kubectl get pods -n kube-system -o wide` to inspect its RKE2 system pods.
+1. Download the repository and extract the ZIP.
+2. Open **index.html** in your browser. Keep the **assets/** folder beside it.
+3. Choose an exercise, work in the terminal and select **Check Answer**.
 
-Run `crictl images` to inspect the current node’s cache. `crictl pull nginx:1.25` pulls from the simulated offline catalog. Use `kubectl get events` to follow failures and recovery, `kubectl logs --previous POD` for a restarting container and `kubectl exec -it POD -- sh` to enter its filesystem. Type `exit` to return to the node.
+Your files, cluster and progress are saved in the browser’s localStorage. Reopen the same file in the same browser profile to pick up where you left off.
 
-Exercises 51–58 cover node image caches, kubeadm bootstrap and upgrades, a local Helm chart, Kustomize overlays, Ingress rules, Gateway API routes and CPU-based autoscaling. Helm supports the local chart and simple value substitutions used in the lab. Autoscaling uses a simulated CPU load.
+## Try the first exercise
 
-## Development
+Choose **01. Create a Pod**. Create an nginx pod in the default namespace, then check its status.
 
-Only developers rebuilding the checked-in static files need Node.js (20 or later). From the repository root:
+~~~sh
+kubectl run nginx --image=nginx:1.25
+kubectl get pod nginx
+~~~
 
-```sh
+When the pod shows **1/1 Running**, select **Check Answer**.
+
+## Exercises
+
+| Exercises | What you’ll practice |
+| --- | --- |
+| 01–15 · Core skills | Create pods and deployments, expose services, configure storage and roll out updates. |
+| 16–45 · Troubleshooting and scheduling | Diagnose crash loops, broken DNS, missing permissions and unschedulable pods. |
+| 46–50 · Two-node clusters | SSH into a worker, repair its agent, drain a node and control pod placement. |
+| 51–58 · Cluster and application management | Inspect image caches, bootstrap and upgrade with kubeadm, deploy with Helm and Kustomize, configure routing and autoscale workloads. |
+
+Browse the [full exercise list](exercises/).
+
+<details>
+<summary>Terminal commands to try</summary>
+
+| Task | Command |
+| --- | --- |
+| Inspect system pods | <code>kubectl get pods -n kube-system -o wide</code> |
+| List images cached on this node | <code>crictl images</code> |
+| Investigate a pod failure | <code>kubectl describe pod nginx</code> |
+| Open a shell inside the pod | <code>kubectl exec -it nginx -- sh</code> |
+| Edit a manifest | <code>vi pod.yaml</code> |
+
+In Vi, press **i** to edit, **Esc** to finish editing, then type **:wq** and press **Enter** to save and exit.
+
+</details>
+
+<details>
+<summary>Add an exercise or rebuild the app</summary>
+
+Use Node.js 20 or later for development. Add a YAML file to <code>exercises/</code> and a solution to <code>frontend/tests/lab.test.js</code>. The [first exercise](exercises/01-create-pod.yaml) shows how to define a task, hints and answer checks.
+
+Run these commands from the repository root to test and regenerate <code>index.html</code> and <code>assets/</code>.
+
+~~~sh
 npm ci --prefix frontend
 npm test --prefix frontend
 npm run lint --prefix frontend
 npm run build --prefix frontend
-```
+~~~
 
-The build bundles the React interface, xterm, YAML parser, CSS and exercise definitions locally and regenerates **index.html** and **assets/**. Edit exercises in **exercises/** and the shell, resource model and kubectl interpreter in **frontend/src/lab/**. The test suite starts each exercise from its original preconditions, solves it using terminal operations and checks the saved state. To develop with live reload, run `npm run dev --prefix frontend`.
+</details>
